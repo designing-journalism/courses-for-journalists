@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>AI Courses for Journalists</title>
+    <description>Collection of AI courses for journalists</description>
+    <link>https://example.com</link>
+    
+    <item>
+        <title>AI Basics for Journalists</title>
+        <description>Learn the fundamentals of AI for journalism</description>
+        <link>https://example.com/course1</link>
+        <level>1</level>
+        <duration>4</duration>
+        <language>Engels</language>
+        <cost>Gratis</cost>
+        <type>E-learning</type>
+    </item>
+    
+    <item>
+        <title>Advanced AI Writing Tools</title>
+        <description>Master AI writing tools for journalism</description>
+        <link>https://example.com/course2</link>
+        <level>2</level>
+        <duration>8</duration>
+        <language>Nederlands</language>
+        <cost>€299</cost>
+        <type>Workshop</type>
+    </item>
+</channel>
+</rss> 
