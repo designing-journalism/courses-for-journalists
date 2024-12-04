@@ -5,16 +5,22 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center mt-5">Welkom bij RegioAcademie</h1>
+    <h1 class="text-center mt-5">Welkom!</h1>
 
-    {% if error_message %}
-    <div class="alert alert-danger" role="alert">
-        {{ error_message }}
-    </div>
+    {% if session.username %}
+        <p class="text-center">Hallo, {{ session.username }}!</p>
+        <div class="text-center">
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Uitloggen</a>
+        </div>
+    {% else %}
+        <p class="text-center">Hier vind je cursussen over kunstmatige intelligentie en meer.</p>
+        <p class="text-center text-muted">Log in voor optimale functionaliteit.</p>
+        <div class="text-center">
+            <a href="{{ url_for('login') }}" class="btn btn-primary">Inloggen</a>
+        </div>
     {% endif %}
 
-    <p class="text-center">Hier vind je cursussen over kunstmatige intelligentie en meer.</p>
-    <div class="text-center">
+    <div class="text-center mt-3">
         <a href="/courses" class="btn btn-primary">Bekijk Cursussen</a>
     </div>
 </div>

@@ -1,9 +1,10 @@
-from flask import Flask, render_template, jsonify, request, redirect
+from flask import Flask, render_template, jsonify, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from src.models import db, Course, User
 from typing import List
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Zorg ervoor dat je een sterke geheime sleutel gebruikt
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Change this to your database URI
@@ -14,7 +15,7 @@ db.init_app(app)
 
 # Define your routes
 @app.route('/')
-def home():
+def index():
     error_message = None
     try:
         # You can add any logic here that might raise an exception
@@ -153,6 +154,19 @@ def manage_users():
     # Fetch all users for display
     users = User.query.all()
     return render_template('manage_users.html', users=users)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        session['username'] = username  # Sla de gebruikersnaam op in de sessie
+        return redirect(url_for('index'))  # Redirect naar de hoofdpagina of een andere pagina
+    return render_template('login.html')  # Render de login template
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Verwijder de gebruikersnaam uit de sessie
+    return redirect(url_for('index'))  # Redirect naar de hoofdpagina
 
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting
