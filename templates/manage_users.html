@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-5">Manage Users</h1>
+
+<!-- User Form -->
+<form method="POST" class="mb-4">
+    <input type="hidden" name="user_id" id="user_id">
+    <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" name="username" id="username" required>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" id="email" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Save User</button>
+</form>
+
+<!-- Existing Users List -->
+<h2>Existing Users</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+                <button class="btn btn-warning" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')">Edit</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    function editUser(id, username, email) {
+        document.getElementById('user_id').value = id;
+        document.getElementById('username').value = username;
+        document.getElementById('email').value = email;
+    }
+</script>
+{% endblock %} 

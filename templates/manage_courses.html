@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Courses{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-5">Manage Courses</h1>
+
+<!-- Course Form -->
+<form method="POST" class="mb-4">
+    <input type="hidden" name="course_id" id="course_id">
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" name="title" id="title" required>
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea class="form-control" name="description" id="description" required></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="duration" class="form-label">Duration</label>
+        <input type="text" class="form-control" name="duration" id="duration" required>
+    </div>
+    <div class="mb-3">
+        <label for="level" class="form-label">Level</label>
+        <select class="form-select" name="level" id="level" required>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" name="status" id="status" required>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Course</button>
+</form>
+
+<!-- Existing Courses List -->
+<h2>Existing Courses</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Duration</th>
+            <th>Level</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for course in courses %}
+        <tr>
+            <td>{{ course.id }}</td>
+            <td>{{ course.title }}</td>
+            <td>{{ course.description }}</td>
+            <td>{{ course.duration }}</td>
+            <td>{{ course.level }}</td>
+            <td>{{ course.status }}</td>
+            <td>
+                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.level }}', '{{ course.status }}')">Edit</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    function editCourse(id, title, description, duration, level, status) {
+        document.getElementById('course_id').value = id;
+        document.getElementById('title').value = title;
+        document.getElementById('description').value = description;
+        document.getElementById('duration').value = duration;
+        document.getElementById('level').value = level;
+        document.getElementById('status').value = status;
+    }
+</script>
+{% endblock %} 

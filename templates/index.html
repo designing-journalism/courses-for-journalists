@@ -1,0 +1,21 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mt-5">Welkom bij RegioAcademie</h1>
+
+    {% if error_message %}
+    <div class="alert alert-danger" role="alert">
+        {{ error_message }}
+    </div>
+    {% endif %}
+
+    <p class="text-center">Hier vind je cursussen over kunstmatige intelligentie en meer.</p>
+    <div class="text-center">
+        <a href="/courses" class="btn btn-primary">Bekijk Cursussen</a>
+    </div>
+</div>
+{% endblock %}
