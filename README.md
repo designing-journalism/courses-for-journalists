@@ -9,7 +9,12 @@ Deze applicatie is een prototype van een Quickscan tool die gebruikers helpt om 
 ## Installatie
 
 1. Clone de repository.
-2. Install dependencies
+2. Zorg dat python geinstalleerd is
+3. Create a virtual environment in dir .venv :  https://docs.python.org/3/library/venv.html
+4. Activate the .venv
+5. pip install -r requirements.txt       (installas requirements)
+6. Start the web app :  python app.py
+7. open browser op (by default)  http://localhost:5000
 
 
 ## Functies
