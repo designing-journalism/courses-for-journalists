@@ -19,3 +19,12 @@ That's just a brainwave i had: experimented with it before, and suddenly thought
 It's one of my favorite tools! Furthermore (for now) it would mean I can create the chat  system locally (hopefully simpler at first), while also experimenting with something that i can easily let other people test (locally at first). 
 
 
+
+## Installation
+
+```st
+Metacello new
+	repository: 'github://designing-journalism/courses-for-journalists:gt-conversationator/';
+	baseline: 'GitCoursesForJournalists';
+	load
+```
