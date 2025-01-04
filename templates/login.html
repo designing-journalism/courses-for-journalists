@@ -10,11 +10,14 @@
     <div class="container">
         <h1 class="text-center mt-5">Inloggen</h1>
         <form method="POST" class="mt-4">
-            <div class="form-group">
-                <label for="username">Voer je naam in:</label>
-                <input type="text" id="username" name="username" class="form-control" required>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" id="username" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block mt-3">Inloggen</button>
+            <button type="submit" class="btn btn-primary">Login</button>
+            {% if error %}
+            <div class="alert alert-danger mt-3">{{ error }}</div>
+            {% endif %}
         </form>
         <div class="text-center mt-3">
             <a href="/" class="btn btn-link">Terug naar Home</a>

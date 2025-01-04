@@ -2,9 +2,10 @@ from flask import Flask, render_template, jsonify, request, redirect, session, u
 from flask_sqlalchemy import SQLAlchemy
 from src.models import db, Course, User
 from typing import List
+from src.utils import calculate_relevancy_points, get_logged_in_user
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Zorg ervoor dat je een sterke geheime sleutel gebruikt
+app.secret_key = 'your_secret_key'  # Ensure this is set for session management
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Change this to your database URI
@@ -24,54 +25,19 @@ def index():
         error_message = str(e)  # Capture the error message
         return render_template('index.html', error_message=error_message)
 
-@app.route('/courses')
+@app.route('/courses', methods=['GET', 'POST'])
 def courses_page():
-    courses = Course.query.filter_by(status='active').all()  # Fetch only active courses
-    quiz_questions = [
-        {
-            "question_nr": 1,  # Question number
-            "question": "Welke stelling past het beste bij jou?",
-            "answers": [
-                {"text": "Je weet wat AI is, maar gebruikt het niet of nauwelijks bewust", "score": 1},
-                {"text": "Je gebruikt AI oppervlakkig en soms in je werk, voornamelijk generatieve AI ter ondersteuning van je werkzaamheden", "score": 2},
-                {"text": "Je gebruikt AI regelmatig in projecten en je werkzaamheden en hebt mogelijk al geëxperimenteerd met het bouwen van modellen met een ICT-er", "score": 3},
-                {"text": "Je hebt veel kennis en kan zelf AI Modellen bouwen", "score": 4}
-            ]
-        },
-        {
-            "question_nr": 2,  # Question number
-            "question": "Hoe vaak gebruik je in jouw werkzaamheden technologieën als kunstmatige intelligentie?",
-            "answers": [
-                {"text": "Zelden tot nooit", "score": 1},
-                {"text": "Af en toe", "score": 3},
-                {"text": "Periodiek", "score": 6},
-                {"text": "Dagelijks", "score": 10}
-            ]
-        },
-        {
-            "question_nr": 3,  # Question number
-            "question": "Hoe schat je jouw eigen kennis en vaardigheid in rond inzet van kunstmatige intelligentie?",
-            "answers": [
-                {"text": "Ik ben er niet of nauwelijks mee bekend", "score": 1},
-                {"text": "Ik ben bekend met de belangrijke concepten en termen van kunstmatige intelligentie", "score": 3},
-                {"text": "Ik weet wat generatieve AI is en welke generatieve AI-systemen in zou kunnen gebruiken in mijn werk", "score": 5},
-                {"text": "Ik heb generatieve AI-tekstsystemen, beeldgeneratiesystemen of andere generatieve AI-systemen ingezet", "score": 7},
-                {"text": "Ik heb enige ervaring met het gebruiken van AI in projecten", "score": 10},
-                {"text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT’er)", "score": 20}
-            ]
-        },
-        {
-            "question_nr": 4,  # Question number
-            "question": "Kies het onderwerp dat je het meest interesseert:",
-            "answers": [
-                {"text": "Machinelearning en AI", "topic": "MLAI"},
-                {"text": "Data analysis and cleaning", "topic": "DACL"},
-                {"text": "AI, ethiek en maatschappelijke gevolgen", "topic": "AIETHIC"},
-                {"text": "Generatieve AI & Prompting", "topic": "GENAI"},
-            ]
-        },
-    ]
-    return render_template('courses.html', courses=courses, quiz_questions=quiz_questions)
+    search_text = request.form.get('search_text', '')
+    level = request.form.get('level', '')
+    quiz_answers = request.form.getlist('quiz_answers')  # Assuming quiz answers are sent as a list
+
+    user = get_logged_in_user()  # Get the current logged-in user
+    courses = Course.query.filter_by(status='active').all()
+
+    # Calculate relevancy points
+    sorted_courses = calculate_relevancy_points(user, courses, search_text, level, quiz_answers)
+
+    return render_template('courses.html', courses=sorted_courses)
 
 @app.route('/about')
 def about_page():
@@ -148,7 +114,7 @@ def manage_users():
                 user.tags = tags  # Update tags
                 db.session.commit()
         else:
-            # Add new user
+            # Add new user without a password
             new_user = User(username=username, email=email, tags=tags)
             db.session.add(new_user)
             db.session.commit()
@@ -163,9 +129,15 @@ def manage_users():
 def login():
     if request.method == 'POST':
         username = request.form['username']
-        session['username'] = username  # Sla de gebruikersnaam op in de sessie
-        return redirect(url_for('index'))  # Redirect naar de hoofdpagina of een andere pagina
-    return render_template('login.html')  # Render de login template
+        # Bypass password verification for now
+        user = User.query.filter_by(username=username).first()
+        if user:  # Assume login is successful if the user exists
+            session['username'] = username  # Store the username in the session
+            return redirect(url_for('index'))  # Redirect to the homepage or another page
+        else:
+            # Handle login failure (e.g., show an error message)
+            return render_template('login.html', error="User not found")
+    return render_template('login.html')  # Render the login template
 
 @app.route('/logout')
 def logout():
