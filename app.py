@@ -135,6 +135,7 @@ def manage_users():
         # Handle form submission for adding or editing users
         username = request.form.get('username')
         email = request.form.get('email')
+        tags = request.form.get('tags')  # New field for tags
 
         # Check if we are editing an existing user
         user_id = request.form.get('user_id')
@@ -144,10 +145,11 @@ def manage_users():
             if user:
                 user.username = username
                 user.email = email
+                user.tags = tags  # Update tags
                 db.session.commit()
         else:
             # Add new user
-            new_user = User(username=username, email=email)
+            new_user = User(username=username, email=email, tags=tags)
             db.session.add(new_user)
             db.session.commit()
 
