@@ -1,3 +1,4 @@
+from flask import session
 from src.models import User
 
 def calculate_relevancy_points(user, courses, search_text, level, quiz_answers):
