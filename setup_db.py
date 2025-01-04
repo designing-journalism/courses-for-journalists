@@ -1,4 +1,5 @@
-from app import app, db  # Adjust the import based on your project structure
+from app import app
+from src.models import db, User  # Ensure User is imported
 
 with app.app_context():
     # Create all tables
