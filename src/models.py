@@ -11,6 +11,7 @@ class Course(db.Model):
     duration = db.Column(db.String(50), nullable=False)
     level = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), default='active')  # 'active' or 'inactive'
+    tags = db.Column(db.String(255))  # New field for tags
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 

@@ -101,7 +101,8 @@ def manage_courses():
         description = request.form.get('description')
         duration = request.form.get('duration')
         level = request.form.get('level')
-        status = request.form.get('status')  # 'active' or 'archived'
+        status = request.form.get('status')
+        tags = request.form.get('tags')  # New field for tags
 
         # Check if we are editing an existing course
         course_id = request.form.get('course_id')
@@ -114,10 +115,11 @@ def manage_courses():
                 course.duration = duration
                 course.level = level
                 course.status = status
+                course.tags = tags  # Update tags
                 db.session.commit()
         else:
             # Add new course
-            new_course = Course(title=title, description=description, duration=duration, level=level, status=status)
+            new_course = Course(title=title, description=description, duration=duration, level=level, status=status, tags=tags)
             db.session.add(new_course)
             db.session.commit()
 
