@@ -129,14 +129,14 @@ def manage_users():
 def login():
     if request.method == 'POST':
         username = request.form['username']
-        # Bypass password verification for now
+        password = request.form['password']
         user = User.query.filter_by(username=username).first()
-        if user:  # Assume login is successful if the user exists
+        if user and user.check_password(password):  # Verify the password
             session['username'] = username  # Store the username in the session
             return redirect(url_for('index'))  # Redirect to the homepage or another page
         else:
             # Handle login failure (e.g., show an error message)
-            return render_template('login.html', error="User not found")
+            return render_template('login.html', error="Invalid username or password")
     return render_template('login.html')  # Render the login template
 
 @app.route('/logout')
