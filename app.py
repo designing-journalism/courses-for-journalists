@@ -37,7 +37,10 @@ def courses_page():
     # Calculate relevancy points
     sorted_courses = calculate_relevancy_points(user, courses, search_text, level, quiz_answers)
 
-    return render_template('courses.html', courses=sorted_courses)
+    # Split user tags by space
+    user_tags = user.tags.split() if user and user.tags else []
+
+    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags)
 
 @app.route('/about')
 def about_page():

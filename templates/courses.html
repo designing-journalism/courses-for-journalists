@@ -5,6 +5,16 @@
 {% block content %}
 <h1 class="text-center mb-5">Aanbevolen Cursussen</h1>
 
+<!-- User Tags Section -->
+<div class="mb-4">
+    <h3>User Tags</h3>
+    <div>
+        {% for tag in user_tags %}
+        <button class="btn btn-outline-primary mb-2">{{ tag }}</button>
+        {% endfor %}
+    </div>
+</div>
+
 <!-- Filter Section -->
 <div class="row mb-4">
     <div class="col-md-8">
