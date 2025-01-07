@@ -54,6 +54,7 @@
             <th>Duration</th>
             <th>Level</th>
             <th>Status</th>
+            <th>Tags</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -66,8 +67,9 @@
             <td>{{ course.duration }}</td>
             <td>{{ course.level }}</td>
             <td>{{ course.status }}</td>
+            <td>{{ course.tags }}</td>
             <td>
-                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.level }}', '{{ course.status }}')">Edit</button>
+                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.level }}', '{{ course.status }}', '{{ course.tags }}')">Edit</button>
             </td>
         </tr>
         {% endfor %}
@@ -75,13 +77,14 @@
 </table>
 
 <script>
-    function editCourse(id, title, description, duration, level, status) {
+    function editCourse(id, title, description, duration, level, status, tags) {
         document.getElementById('course_id').value = id;
         document.getElementById('title').value = title;
         document.getElementById('description').value = description;
         document.getElementById('duration').value = duration;
         document.getElementById('level').value = level;
         document.getElementById('status').value = status;
+        document.getElementById('tags').value = tags;
     }
 </script>
 {% endblock %} 
