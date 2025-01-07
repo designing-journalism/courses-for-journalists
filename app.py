@@ -5,6 +5,7 @@ from src.models import db, Course, User, Tag
 from typing import List
 from src.utils import calculate_relevancy_points, get_logged_in_user
 from sqlalchemy.exc import IntegrityError
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ensure this is set for session management
@@ -18,6 +19,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database
 db.init_app(app)
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
 # Define your routes
 @app.route('/')
@@ -173,7 +177,12 @@ def collect_tags():
             db.session.rollback()
             print("Er is een fout opgetreden bij het toevoegen van tags.")
     
-    return redirect(url_for('manage_courses'))
+    return redirect(url_for('show_collected_tags'))
+
+@app.route('/show-collected-tags')
+def show_collected_tags():
+    tags = Tag.query.all()
+    return render_template('show_collected_tags.html', tags=tags)
 
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting
