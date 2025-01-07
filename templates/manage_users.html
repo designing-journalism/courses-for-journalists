@@ -31,6 +31,7 @@
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
+            <th>Tags</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -40,8 +41,9 @@
             <td>{{ user.id }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
+            <td>{{ user.tags }}</td>
             <td>
-                <button class="btn btn-warning" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}')">Edit</button>
+                <button class="btn btn-warning" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}', '{{ user.tags }}')">Edit</button>
             </td>
         </tr>
         {% endfor %}
@@ -49,10 +51,11 @@
 </table>
 
 <script>
-    function editUser(id, username, email) {
+    function editUser(id, username, email, tags) {
         document.getElementById('user_id').value = id;
         document.getElementById('username').value = username;
         document.getElementById('email').value = email;
+        document.getElementById('tags').value = tags;
     }
 </script>
 {% endblock %} 
