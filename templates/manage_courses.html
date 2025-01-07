@@ -54,7 +54,7 @@
 <!-- Button to collect tags -->
 <form method="POST" action="{{ url_for('collect_tags') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn btn-info">Verzamel Tags</button>
+    <button type="submit" class="btn btn-info" title="Verzamel de Tags van alle cursussen">Verzamel Tags</button>
 </form>
 
 <!-- Existing Courses List -->
