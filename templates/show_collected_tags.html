@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Collected Tags{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-5">Collected Tags</h1>
+
+<ul class="list-group mb-4">
+    {% for tag in tags %}
+        <li class="list-group-item">{{ tag.tag_name }}</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('manage_courses') }}" class="btn btn-secondary">Back to Manage Courses</a>
+
+{% endblock %} 

@@ -1,0 +1,228 @@
+from flask import Flask, render_template, jsonify, request, redirect, session, url_for
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import CSRFProtect
+from src.models import db, Course, User, Tag
+from typing import List
+from src.utils import calculate_relevancy_points, get_logged_in_user
+from sqlalchemy.exc import IntegrityError
+from flask_migrate import Migrate
+
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # Ensure this is set for session management
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Change this to your database URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize the database
+db.init_app(app)
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
+
+# Define your routes
+@app.route('/')
+def index():
+    error_message = None
+    try:
+        # You can add any logic here that might raise an exception
+        return render_template('index.html', error_message=error_message)
+    except Exception as e:
+        error_message = str(e)  # Capture the error message
+        return render_template('index.html', error_message=error_message)
+
+@app.route('/courses', methods=['GET', 'POST'])
+def courses_page():
+    search_text = request.form.get('search_text', '')
+    level = request.form.get('level', '')
+    quiz_answers = request.form.getlist('quiz_answers')  # Assuming quiz answers are sent as a list
+
+    user = get_logged_in_user()  # Get the current logged-in user
+    courses = Course.query.filter_by(status='active').all()
+
+    # Calculate relevancy points
+    sorted_courses = calculate_relevancy_points(user, courses, search_text, level, quiz_answers)
+
+    # Split user tags by space
+    user_tags = user.tags.split() if user and user.tags else []
+
+    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags)
+
+@app.route('/about')
+def about_page():
+    return render_template('about.html')
+
+@app.route('/api/courses')
+def get_courses():
+    try:
+        courses = Course.query.filter_by(status='active').all()  # Fetch only active courses
+        # Convert each course instance to a dictionary
+        return jsonify([{
+            'id': course.id,
+            'title': course.title,
+            'description': course.description,
+            'duration': course.duration,
+            'level': course.level,
+            'status': course.status
+        } for course in courses])  # Adjust as necessary
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/manage_courses')
+def manage_courses():
+    courses = Course.query.all()
+    tags = Tag.query.all()
+    return render_template('manage_courses.html', courses=courses, tags=tags)
+
+@app.route('/manage_users', methods=['GET', 'POST'])
+def manage_users():
+    if request.method == 'POST':
+        # Handle form submission for adding or editing users
+        username = request.form.get('username')
+        email = request.form.get('email')
+        tags = request.form.get('tags')  # New field for tags
+
+        # Check if we are editing an existing user
+        user_id = request.form.get('user_id')
+        if user_id:
+            # Update existing user
+            user = User.query.get(user_id)
+            if user:
+                user.username = username
+                user.email = email
+                user.tags = tags  # Update tags
+                db.session.commit()
+        else:
+            # Add new user without a password
+            new_user = User(username=username, email=email, tags=tags)
+            db.session.add(new_user)
+            db.session.commit()
+
+        return redirect('/manage_users')  # Redirect to the same page after submission
+
+    # Fetch all users for display
+    users = User.query.all()
+    return render_template('manage_users.html', users=users)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']  # Still capture the password input
+        # Bypass password verification
+        user = User.query.filter_by(username=username).first()
+        if user:  # Assume login is successful if the user exists
+            session['username'] = username  # Store the username in the session
+            return redirect(url_for('index'))  # Redirect to the homepage or another page
+        else:
+            # Handle login failure (e.g., show an error message)
+            return render_template('login.html', error="User not found")
+    return render_template('login.html')  # Render the login template
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Verwijder de gebruikersnaam uit de sessie
+    return redirect(url_for('index'))  # Redirect naar de hoofdpagina
+
+@app.route('/remove_tag', methods=['POST'])
+def remove_tag():
+    tag_to_remove = request.form.get('tag')
+    user = get_logged_in_user()
+
+    if user and tag_to_remove:
+        # Split the tags, remove the specified tag, and update the user
+        user_tags = set(user.tags.split())
+        user_tags.discard(tag_to_remove)  # Remove the tag if it exists
+        user.tags = ' '.join(user_tags)  # Rejoin the tags into a string
+        db.session.commit()
+        return jsonify(success=True, message="Tag removed successfully.")
+    
+    return jsonify(success=False, message="Failed to remove tag.")
+
+@app.route('/collect_tags', methods=['POST'])
+def collect_tags():
+    # Start een database sessie
+    with db.session.begin():
+        # Haal alle courses op
+        courses = Course.query.all()
+        
+        # Set om unieke tags op te slaan
+        unique_tags = set()
+        
+        # Loop door elke course en verzamel tags
+        for course in courses:
+            if course.tags:
+                # Split tags op spaties
+                tags = course.tags.split()
+                # Voeg elke tag toe aan de set van unieke tags
+                unique_tags.update(tags)
+        
+        # Voeg unieke tags toe aan de Tags tabel
+        for tag_name in unique_tags:
+            # Controleer of de tag al bestaat
+            existing_tag = Tag.query.filter_by(tag_name=tag_name).first()
+            if not existing_tag:
+                # Voeg de nieuwe tag toe
+                new_tag = Tag(tag_name=tag_name)
+                db.session.add(new_tag)
+        
+        # Commit de sessie
+        try:
+            db.session.commit()
+            print("Tags succesvol verzameld en toegevoegd.")
+        except IntegrityError:
+            db.session.rollback()
+            print("Er is een fout opgetreden bij het toevoegen van tags.")
+    
+    return redirect(url_for('show_collected_tags'))
+
+@app.route('/show_collected_tags')
+def show_collected_tags():
+    tags = Tag.query.all()
+    return render_template('show_collected_tags.html', tags=tags)
+
+@app.route('/save_course', methods=['POST'])
+def save_course():
+    # Retrieve form data
+    title = request.form.get('title')
+    description = request.form.get('description')
+    duration = request.form.get('duration')
+    level = request.form.get('level')
+    status = request.form.get('status')
+    tags = request.form.get('tags')
+
+    # Create a new course or update an existing one
+    course_id = request.form.get('course_id')
+    if course_id:
+        # Update existing course
+        course = Course.query.get(course_id)
+        if course:
+            course.title = title
+            course.description = description
+            course.duration = duration
+            course.level = level
+            course.status = status
+            course.tags = tags
+    else:
+        # Add new course
+        new_course = Course(
+            title=title,
+            description=description,
+            duration=duration,
+            level=level,
+            status=status,
+            tags=tags
+        )
+        db.session.add(new_course)
+
+    # Commit the session
+    db.session.commit()
+
+    # Redirect back to manage courses page
+    return redirect(url_for('manage_courses'))
+
+if __name__ == '__main__':
+    app.run(debug=True)  # Set debug=True for easier troubleshooting

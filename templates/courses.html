@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Aanbevolen Cursussen{% endblock %}
+
+{% block content %}
+<h1 class="text-center mb-5">Aanbevolen Cursussen</h1>
+
+<!-- User Tags Section -->
+<div class="mb-4">
+    <h3>Interesse in (klik om te verwijderen)</h3>
+    <div id="userTagsContainer">
+        {% for tag in user_tags %}
+        <button class="btn btn-outline-primary mb-2" onclick="removeTag('{{ tag }}')">{{ tag }}</button>
+        {% endfor %}
+    </div>
+    <hr/>
+</div>
+
+<!-- Filter Section -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <input 
+            type="text" 
+            class="form-control" 
+            id="searchInput" 
+            placeholder="Zoek cursussen..."
+            oninput="filterCourses()"
+        >
+    </div>
+    <div class="col-md-4">
+        <select class="form-select btn btn-secondary" id="levelFilter" onchange="filterCourses()">
+            <option value="">Alle niveaus</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+        </select>
+    </div>
+</div>
+
+<!-- Title for the Course List -->
+<h2 class="text-center mb-4">Selectie</h2>
+
+<!-- Quiz Questions Section -->
+<div class="container mb-4">
+    <h2 class="text-center">Quiz Vragen</h2>
+    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#quizCollapse" aria-expanded="true" aria-controls="quizCollapse">
+        Toggle Quiz Questions
+    </button>
+    <div class="collapse show" id="quizCollapse">
+        <div class="card mt-3">
+            <div class="card-body">
+                <form id="quizForm">
+                    {% for question in quiz_questions %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ question.question_nr }}. {{ question.question }}</label>
+                        {% for answer in question.answers %}
+                        <div>
+                            <input type="radio" name="question_{{ question.question_nr }}" value="{{ answer.score }}" id="answer_{{ question.question_nr }}_{{ loop.index0 }}">
+                            <label for="answer_{{ question.question_nr }}_{{ loop.index0 }}">{{ answer.text }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">Submit Quiz</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Courses Container -->
+<div class="container">
+    <div class="row g-4" id="coursesList">
+        {% for course in courses %}
+        <div class="col-12 course-item" data-level="{{ course.level }}">
+            <div class="card h-100 shadow-sm course-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <p class="card-text text-muted">
+                        {{ course.description }}
+                    </p>
+                    <div class="mt-3">
+                        <span class="badge bg-primary me-2">
+                            <i class="bi bi-clock"></i> {{ course.duration }}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-bar-chart-fill"></i> {{ course.level }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        Course ID: {{ course.id }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function filterCourses() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const levelFilter = document.getElementById('levelFilter').value;
+        const courses = document.querySelectorAll('.course-item');
+
+        courses.forEach(course => {
+            const title = course.querySelector('.card-title').textContent.toLowerCase();
+            const level = course.getAttribute('data-level');
+
+            const matchesSearch = title.includes(searchInput);
+            const matchesLevel = levelFilter === '' || level === levelFilter;
+
+            if (matchesSearch && matchesLevel) {
+                course.style.display = '';
+            } else {
+                course.style.display = 'none';
+            }
+        });
+    }
+
+    function removeTag(tag) {
+        fetch('/remove_tag', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'  // CSRF token included
+            },
+            body: new URLSearchParams({ tag: tag })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the button from the DOM
+                const button = document.querySelector(`button[onclick="removeTag('${tag}')"]`);
+                if (button) {
+                    button.remove();
+                }
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+{% endblock %}
+
