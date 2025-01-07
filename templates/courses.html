@@ -7,12 +7,13 @@
 
 <!-- User Tags Section -->
 <div class="mb-4">
-    <h3>User Tags</h3>
+    <h3>Interesse in (klik om te verwijderen)</h3>
     <div id="userTagsContainer">
         {% for tag in user_tags %}
         <button class="btn btn-outline-primary mb-2" onclick="removeTag('{{ tag }}')">{{ tag }}</button>
         {% endfor %}
     </div>
+    <hr/>
 </div>
 
 <!-- Filter Section -->
