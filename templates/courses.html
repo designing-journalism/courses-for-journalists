@@ -124,7 +124,7 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': '{{ csrf_token() }}'  // If CSRF protection is enabled
+                'X-CSRFToken': '{{ csrf_token() }}'  // CSRF token included
             },
             body: new URLSearchParams({ tag: tag })
         })

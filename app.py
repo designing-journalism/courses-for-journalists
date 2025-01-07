@@ -1,11 +1,15 @@
 from flask import Flask, render_template, jsonify, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import CSRFProtect
 from src.models import db, Course, User
 from typing import List
 from src.utils import calculate_relevancy_points, get_logged_in_user
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ensure this is set for session management
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Change this to your database URI

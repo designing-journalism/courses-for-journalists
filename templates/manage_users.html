@@ -7,6 +7,7 @@
 
 <!-- User Form -->
 <form method="POST" class="mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="user_id" id="user_id">
     <div class="mb-3">
         <label for="username" class="form-label">Username</label>
