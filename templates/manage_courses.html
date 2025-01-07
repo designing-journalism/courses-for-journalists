@@ -43,6 +43,19 @@
     <button type="submit" class="btn btn-primary">Save Course</button>
 </form>
 
+<!-- Existing Tags -->
+<div class="mb-4">
+    <h3>Tags</h3>
+    {% for tag in tags %}
+        <button type="button" class="btn btn-secondary">{{ tag.tag_name }}</button>
+    {% endfor %}
+</div>
+
+<!-- Button to collect tags -->
+<form method="POST" action="{{ url_for('collect_tags') }}">
+    <button type="submit" class="btn btn-info">Verzamel Tags</button>
+</form>
+
 <!-- Existing Courses List -->
 <h2>Existing Courses</h2>
 <table class="table">

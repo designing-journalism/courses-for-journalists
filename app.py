@@ -1,9 +1,10 @@
 from flask import Flask, render_template, jsonify, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from src.models import db, Course, User
+from src.models import db, Course, User, Tag
 from typing import List
 from src.utils import calculate_relevancy_points, get_logged_in_user
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ensure this is set for session management
@@ -66,41 +67,11 @@ def get_courses():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/manage_courses', methods=['GET', 'POST'])
+@app.route('/manage_courses')
 def manage_courses():
-    if request.method == 'POST':
-        # Handle form submission for adding or editing courses
-        title = request.form.get('title')
-        description = request.form.get('description')
-        duration = request.form.get('duration')
-        level = request.form.get('level')
-        status = request.form.get('status')
-        tags = request.form.get('tags')  # New field for tags
-
-        # Check if we are editing an existing course
-        course_id = request.form.get('course_id')
-        if course_id:
-            # Update existing course
-            course = Course.query.get(course_id)
-            if course:
-                course.title = title
-                course.description = description
-                course.duration = duration
-                course.level = level
-                course.status = status
-                course.tags = tags  # Update tags
-                db.session.commit()
-        else:
-            # Add new course
-            new_course = Course(title=title, description=description, duration=duration, level=level, status=status, tags=tags)
-            db.session.add(new_course)
-            db.session.commit()
-
-        return redirect('/manage_courses')  # Redirect to the same page after submission
-
-    # Fetch all courses for display
     courses = Course.query.all()
-    return render_template('manage_courses.html', courses=courses)
+    tags = Tag.query.all()
+    return render_template('manage_courses.html', courses=courses, tags=tags)
 
 @app.route('/manage_users', methods=['GET', 'POST'])
 def manage_users():
@@ -166,6 +137,43 @@ def remove_tag():
         return jsonify(success=True, message="Tag removed successfully.")
     
     return jsonify(success=False, message="Failed to remove tag.")
+
+@app.route('/collect-tags', methods=['POST'])
+def collect_tags():
+    # Start een database sessie
+    with db.session.begin():
+        # Haal alle courses op
+        courses = Course.query.all()
+        
+        # Set om unieke tags op te slaan
+        unique_tags = set()
+        
+        # Loop door elke course en verzamel tags
+        for course in courses:
+            if course.tags:
+                # Split tags op spaties
+                tags = course.tags.split()
+                # Voeg elke tag toe aan de set van unieke tags
+                unique_tags.update(tags)
+        
+        # Voeg unieke tags toe aan de Tags tabel
+        for tag_name in unique_tags:
+            # Controleer of de tag al bestaat
+            existing_tag = Tag.query.filter_by(tag_name=tag_name).first()
+            if not existing_tag:
+                # Voeg de nieuwe tag toe
+                new_tag = Tag(tag_name=tag_name)
+                db.session.add(new_tag)
+        
+        # Commit de sessie
+        try:
+            db.session.commit()
+            print("Tags succesvol verzameld en toegevoegd.")
+        except IntegrityError:
+            db.session.rollback()
+            print("Er is een fout opgetreden bij het toevoegen van tags.")
+    
+    return redirect(url_for('manage_courses'))
 
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting
