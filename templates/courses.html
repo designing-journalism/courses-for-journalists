@@ -8,9 +8,9 @@
 <!-- User Tags Section -->
 <div class="mb-4">
     <h3>User Tags</h3>
-    <div>
+    <div id="userTagsContainer">
         {% for tag in user_tags %}
-        <button class="btn btn-outline-primary mb-2">{{ tag }}</button>
+        <button class="btn btn-outline-primary mb-2" onclick="removeTag('{{ tag }}')">{{ tag }}</button>
         {% endfor %}
     </div>
 </div>
@@ -117,6 +117,30 @@
                 course.style.display = 'none';
             }
         });
+    }
+
+    function removeTag(tag) {
+        fetch('/remove_tag', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'  // If CSRF protection is enabled
+            },
+            body: new URLSearchParams({ tag: tag })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the button from the DOM
+                const button = document.querySelector(`button[onclick="removeTag('${tag}')"]`);
+                if (button) {
+                    button.remove();
+                }
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}

@@ -148,5 +148,20 @@ def logout():
     session.pop('username', None)  # Verwijder de gebruikersnaam uit de sessie
     return redirect(url_for('index'))  # Redirect naar de hoofdpagina
 
+@app.route('/remove_tag', methods=['POST'])
+def remove_tag():
+    tag_to_remove = request.form.get('tag')
+    user = get_logged_in_user()
+
+    if user and tag_to_remove:
+        # Split the tags, remove the specified tag, and update the user
+        user_tags = set(user.tags.split())
+        user_tags.discard(tag_to_remove)  # Remove the tag if it exists
+        user.tags = ' '.join(user_tags)  # Rejoin the tags into a string
+        db.session.commit()
+        return jsonify(success=True, message="Tag removed successfully.")
+    
+    return jsonify(success=False, message="Failed to remove tag.")
+
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting
