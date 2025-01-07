@@ -52,3 +52,13 @@ class UserResponse(db.Model):
     question_id = db.Column(db.Integer, nullable=False)
     answer_score = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+# New Tag model
+class Tag(db.Model):
+    __tablename__ = 'tags'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    tag_name = db.Column(db.String, nullable=False)
+
+    def __repr__(self):
+        return f"<Tag(tag_name='{self.tag_name}')>"
