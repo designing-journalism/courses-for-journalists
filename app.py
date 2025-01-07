@@ -142,7 +142,7 @@ def remove_tag():
     
     return jsonify(success=False, message="Failed to remove tag.")
 
-@app.route('/collect-tags', methods=['POST'])
+@app.route('/collect_tags', methods=['POST'])
 def collect_tags():
     # Start een database sessie
     with db.session.begin():
@@ -179,10 +179,50 @@ def collect_tags():
     
     return redirect(url_for('show_collected_tags'))
 
-@app.route('/show-collected-tags')
+@app.route('/show_collected_tags')
 def show_collected_tags():
     tags = Tag.query.all()
     return render_template('show_collected_tags.html', tags=tags)
+
+@app.route('/save_course', methods=['POST'])
+def save_course():
+    # Retrieve form data
+    title = request.form.get('title')
+    description = request.form.get('description')
+    duration = request.form.get('duration')
+    level = request.form.get('level')
+    status = request.form.get('status')
+    tags = request.form.get('tags')
+
+    # Create a new course or update an existing one
+    course_id = request.form.get('course_id')
+    if course_id:
+        # Update existing course
+        course = Course.query.get(course_id)
+        if course:
+            course.title = title
+            course.description = description
+            course.duration = duration
+            course.level = level
+            course.status = status
+            course.tags = tags
+    else:
+        # Add new course
+        new_course = Course(
+            title=title,
+            description=description,
+            duration=duration,
+            level=level,
+            status=status,
+            tags=tags
+        )
+        db.session.add(new_course)
+
+    # Commit the session
+    db.session.commit()
+
+    # Redirect back to manage courses page
+    return redirect(url_for('manage_courses'))
 
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting
