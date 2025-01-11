@@ -45,12 +45,7 @@
     <div class="mb-4">
         <h3>Tags</h3>
         {% for tag in tags %}
-            {% if course %}
-                {% set tag_class = 'btn-success' if tag.tag_name in course.tags.split() else 'btn-danger' %}
-            {% else %}
-                {% set tag_class = 'btn-danger' %}
-            {% endif %}
-            <button type="button" class="btn {{ tag_class }}" onclick="toggleTag('{{ tag.tag_name }}')">{{ tag.tag_name }}</button>
+            <button type="button" class="btn btn-danger" id="tag-{{ tag.tag_name }}" onclick="toggleTag('{{ tag.tag_name }}')">{{ tag.tag_name }}</button>
         {% endfor %}
     </div>
 
@@ -105,6 +100,19 @@
         document.getElementById('level').value = level;
         document.getElementById('status').value = status;
         document.getElementById('tags').value = tags;
+
+        // Update tag button colors based on the current course tags
+        const tagButtons = document.querySelectorAll('.btn');
+        tagButtons.forEach(button => {
+            const tagName = button.innerText;
+            if (tags.split(' ').includes(tagName)) {
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-success');
+            } else {
+                button.classList.remove('btn-success');
+                button.classList.add('btn-danger');
+            }
+        });
     }
 
     function toggleTag(tagName) {
@@ -114,8 +122,12 @@
 
         if (tagIndex > -1) {
             tags.splice(tagIndex, 1);
+            document.getElementById(`tag-${tagName}`).classList.remove('btn-success');
+            document.getElementById(`tag-${tagName}`).classList.add('btn-danger');
         } else {
             tags.push(tagName);
+            document.getElementById(`tag-${tagName}`).classList.remove('btn-danger');
+            document.getElementById(`tag-${tagName}`).classList.add('btn-success');
         }
 
         tagsInput.value = tags.join(' ');
