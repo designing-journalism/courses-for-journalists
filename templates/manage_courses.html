@@ -40,16 +40,22 @@
         <label for="tags">Tags</label>
         <input type="text" class="form-control" id="tags" name="tags" placeholder="Enter tags separated by spaces">
     </div>
+
+    <!-- Existing Tags -->
+    <div class="mb-4">
+        <h3>Tags</h3>
+        {% for tag in tags %}
+            {% if course %}
+                {% set tag_class = 'btn-success' if tag.tag_name in course.tags.split() else 'btn-danger' %}
+            {% else %}
+                {% set tag_class = 'btn-danger' %}
+            {% endif %}
+            <button type="button" class="btn {{ tag_class }}" onclick="toggleTag('{{ tag.tag_name }}')">{{ tag.tag_name }}</button>
+        {% endfor %}
+    </div>
+
     <button type="submit" class="btn btn-primary">Save Course</button>
 </form>
-
-<!-- Existing Tags -->
-<div class="mb-4">
-    <h3>Tags</h3>
-    {% for tag in tags %}
-        <button type="button" class="btn btn-secondary">{{ tag.tag_name }}</button>
-    {% endfor %}
-</div>
 
 <!-- Button to collect tags -->
 <form method="POST" action="{{ url_for('collect_tags') }}">
@@ -99,6 +105,20 @@
         document.getElementById('level').value = level;
         document.getElementById('status').value = status;
         document.getElementById('tags').value = tags;
+    }
+
+    function toggleTag(tagName) {
+        const tagsInput = document.getElementById('tags');
+        let tags = tagsInput.value.split(' ').filter(Boolean);
+        const tagIndex = tags.indexOf(tagName);
+
+        if (tagIndex > -1) {
+            tags.splice(tagIndex, 1);
+        } else {
+            tags.push(tagName);
+        }
+
+        tagsInput.value = tags.join(' ');
     }
 </script>
 {% endblock %} 

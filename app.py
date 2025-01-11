@@ -71,11 +71,15 @@ def get_courses():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/manage_courses')
+@app.route('/manage_courses', methods=['GET', 'POST'])
 def manage_courses():
+    # Example: Get a specific course by ID
+    course_id = request.args.get('course_id')
+    course = Course.query.get(course_id) if course_id else None
+
     courses = Course.query.all()
     tags = Tag.query.all()
-    return render_template('manage_courses.html', courses=courses, tags=tags)
+    return render_template('manage_courses.html', courses=courses, tags=tags, course=course)
 
 @app.route('/manage_users', methods=['GET', 'POST'])
 def manage_users():
