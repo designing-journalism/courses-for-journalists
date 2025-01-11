@@ -37,8 +37,17 @@
     </div>
 </div>
 
-<!-- Title for the Course List -->
-<h2 class="text-center mb-4">Selectie</h2>
+<!-- All Tags Section -->
+<div class="mb-4">
+    <h3>All Tags</h3>
+    <div id="allTagsContainer">
+        {% for tag in all_tags %}
+        <button class="btn btn-outline-secondary mb-2">{{ tag.tag_name }}</button>
+        {% endfor %}
+    </div>
+    <hr/>
+</div>
+
 
 <!-- Quiz Questions Section -->
 <div class="container mb-4">
@@ -68,6 +77,8 @@
     </div>
 </div>
 
+<!-- Title for the Course List -->
+<h2 class="text-center mb-4">Selectie</h2>
 <!-- Courses Container -->
 <div class="container">
     <div class="row g-4" id="coursesList">

@@ -49,7 +49,10 @@ def courses_page():
     # Split user tags by space
     user_tags = user.tags.split() if user and user.tags else []
 
-    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags)
+    # Query all tags from the database
+    all_tags = Tag.query.all()
+
+    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags, all_tags=all_tags)
 
 @app.route('/about')
 def about_page():
