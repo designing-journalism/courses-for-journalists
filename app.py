@@ -231,5 +231,20 @@ def save_course():
     # Redirect back to manage courses page
     return redirect(url_for('manage_courses'))
 
+@app.route('/add_tag', methods=['POST'])
+def add_tag():
+    tag_to_add = request.form.get('tag')
+    user = get_logged_in_user()
+
+    if user and tag_to_add:
+        # Split the tags, add the specified tag, and update the user
+        user_tags = set(user.tags.split())
+        user_tags.add(tag_to_add)  # Add the tag
+        user.tags = ' '.join(user_tags)  # Rejoin the tags into a string
+        db.session.commit()
+        return jsonify(success=True, message="Tag added successfully.")
+    
+    return jsonify(success=False, message="Failed to add tag.")
+
 if __name__ == '__main__':
     app.run(debug=True)  # Set debug=True for easier troubleshooting

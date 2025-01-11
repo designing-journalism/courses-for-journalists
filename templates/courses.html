@@ -16,6 +16,18 @@
     <hr/>
 </div>
 
+<!-- All Tags Section -->
+<div class="mb-4">
+    <h3>Alle Tags</h3>
+    <div id="allTagsContainer">
+        {% for tag in all_tags %}
+        <button class="btn mb-2 {{ 'btn-success' if tag.tag_name in user_tags else 'btn-danger' }}" onclick="toggleUserTag('{{ tag.tag_name }}', this)">{{ tag.tag_name }}</button>
+        {% endfor %}
+    </div>
+    <hr/>
+</div>
+
+
 <!-- Filter Section -->
 <div class="row mb-4">
     <div class="col-md-8">
@@ -35,17 +47,6 @@
             <option value="Advanced">Advanced</option>
         </select>
     </div>
-</div>
-
-<!-- All Tags Section -->
-<div class="mb-4">
-    <h3>All Tags</h3>
-    <div id="allTagsContainer">
-        {% for tag in all_tags %}
-        <button class="btn btn-outline-secondary mb-2">{{ tag.tag_name }}</button>
-        {% endfor %}
-    </div>
-    <hr/>
 </div>
 
 
@@ -153,6 +154,34 @@
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    function toggleUserTag(tagName, button) {
+        const isTagInUserTags = button.classList.contains('btn-success');
+        const url = isTagInUserTags ? '/remove_tag' : '/add_tag';
+        const method = 'POST';
+        const headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        };
+        const body = new URLSearchParams({ tag: tagName });
+
+        fetch(url, { method, headers, body })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (isTagInUserTags) {
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-danger');
+                    } else {
+                        button.classList.remove('btn-danger');
+                        button.classList.add('btn-success');
+                    }
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}
