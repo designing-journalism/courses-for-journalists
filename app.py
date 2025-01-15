@@ -6,6 +6,7 @@ from typing import List
 from src.utils import calculate_relevancy_points, get_logged_in_user
 from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Ensure this is set for session management
@@ -247,4 +248,7 @@ def add_tag():
     return jsonify(success=False, message="Failed to add tag.")
 
 if __name__ == '__main__':
-    app.run(debug=True)  # Set debug=True for easier troubleshooting
+    # Get the port from the environment variable, default to 5000 if not set
+    port = int(os.environ.get('PORT', 5000))
+    # Run the app on the specified port
+    app.run(host='0.0.0.0', port=port)
