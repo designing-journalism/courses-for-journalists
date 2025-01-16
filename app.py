@@ -37,6 +37,52 @@ def index():
 
 @app.route('/courses', methods=['GET', 'POST'])
 def courses_page():
+    courses = Course.query.filter_by(status='active').all()  # Fetch only active courses
+    quiz_questions = [
+        {
+            "question_nr": 1,  # Question number
+            "question": "Welke stelling past het beste bij jou?",
+            "answers": [
+                {"text": "Je weet wat AI is, maar gebruikt het niet of nauwelijks bewust", "score": 1},
+                {"text": "Je gebruikt AI oppervlakkig en soms in je werk, voornamelijk generatieve AI ter ondersteuning van je werkzaamheden", "score": 2},
+                {"text": "Je gebruikt AI regelmatig in projecten en je werkzaamheden en hebt mogelijk al geëxperimenteerd met het bouwen van modellen met een ICT-er", "score": 3},
+                {"text": "Je hebt veel kennis en kan zelf AI Modellen bouwen", "score": 4}
+            ]
+        },
+        {
+            "question_nr": 2,  # Question number
+            "question": "Hoe vaak gebruik je in jouw werkzaamheden technologieën als kunstmatige intelligentie?",
+            "answers": [
+                {"text": "Zelden tot nooit", "score": 1},
+                {"text": "Af en toe", "score": 3},
+                {"text": "Periodiek", "score": 6},
+                {"text": "Dagelijks", "score": 10}
+            ]
+        },
+        {
+            "question_nr": 3,  # Question number
+            "question": "Hoe schat je jouw eigen kennis en vaardigheid in rond inzet van kunstmatige intelligentie?",
+            "answers": [
+                {"text": "Ik ben er niet of nauwelijks mee bekend", "score": 1},
+                {"text": "Ik ben bekend met de belangrijke concepten en termen van kunstmatige intelligentie", "score": 3},
+                {"text": "Ik weet wat generatieve AI is en welke generatieve AI-systemen in zou kunnen gebruiken in mijn werk", "score": 5},
+                {"text": "Ik heb generatieve AI-tekstsystemen, beeldgeneratiesystemen of andere generatieve AI-systemen ingezet", "score": 7},
+                {"text": "Ik heb enige ervaring met het gebruiken van AI in projecten", "score": 10},
+                {"text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT’er)", "score": 20}
+            ]
+        },
+        {
+            "question_nr": 4,  # Question number
+            "question": "Kies het onderwerp dat je het meest interesseert:",
+            "answers": [
+                {"text": "Machinelearning en AI", "topic": "MLAI"},
+                {"text": "Data analysis and cleaning", "topic": "DACL"},
+                {"text": "AI, ethiek en maatschappelijke gevolgen", "topic": "AIETHIC"},
+                {"text": "Generatieve AI & Prompting", "topic": "GENAI"},
+            ]
+        },
+    ]
+
     search_text = request.form.get('search_text', '')
     level = request.form.get('level', '')
     quiz_answers = request.form.getlist('quiz_answers')  # Assuming quiz answers are sent as a list
@@ -53,7 +99,7 @@ def courses_page():
     # Query all tags from the database
     all_tags = Tag.query.all()
 
-    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags, all_tags=all_tags)
+    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags, all_tags=all_tags, quiz_questions=quiz_questions)
 
 @app.route('/about')
 def about_page():
@@ -249,6 +295,6 @@ def add_tag():
 
 if __name__ == '__main__':
     # Get the port from the environment variable, default to 5000 if not set
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     # Run the app on the specified port
     app.run(host='0.0.0.0', port=port)
