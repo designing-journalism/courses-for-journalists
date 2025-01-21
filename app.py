@@ -68,7 +68,7 @@ def courses_page():
                 {"text": "Ik weet wat generatieve AI is en welke generatieve AI-systemen in zou kunnen gebruiken in mijn werk", "score": 5},
                 {"text": "Ik heb generatieve AI-tekstsystemen, beeldgeneratiesystemen of andere generatieve AI-systemen ingezet", "score": 7},
                 {"text": "Ik heb enige ervaring met het gebruiken van AI in projecten", "score": 10},
-                {"text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT’er)", "score": 20}
+                {"text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT'er)", "score": 20}
             ]
         },
         {
@@ -280,18 +280,32 @@ def save_course():
 
 @app.route('/add_tag', methods=['POST'])
 def add_tag():
-    tag_to_add = request.form.get('tag')
-    user = get_logged_in_user()
+    if session.get('username') == 'admin':
+        tag_name = request.form.get('tag_name')
+        if tag_name:
+            new_tag = Tag(tag_name=tag_name)
+            db.session.add(new_tag)
+            db.session.commit()
+    return redirect(url_for('show_collected_tags'))
 
-    if user and tag_to_add:
-        # Split the tags, add the specified tag, and update the user
-        user_tags = set(user.tags.split())
-        user_tags.add(tag_to_add)  # Add the tag
-        user.tags = ' '.join(user_tags)  # Rejoin the tags into a string
-        db.session.commit()
-        return jsonify(success=True, message="Tag added successfully.")
-    
-    return jsonify(success=False, message="Failed to add tag.")
+@app.route('/edit_tag/<int:tag_id>', methods=['POST'])
+def edit_tag(tag_id):
+    if session.get('username') == 'admin':
+        tag_name = request.form.get('tag_name')
+        tag = Tag.query.get(tag_id)
+        if tag and tag_name:
+            tag.tag_name = tag_name
+            db.session.commit()
+    return redirect(url_for('show_collected_tags'))
+
+@app.route('/delete_tag/<int:tag_id>', methods=['POST'])
+def delete_tag(tag_id):
+    if session.get('username') == 'admin':
+        tag = Tag.query.get(tag_id)
+        if tag:
+            db.session.delete(tag)
+            db.session.commit()
+    return redirect(url_for('show_collected_tags'))
 
 if __name__ == '__main__':
     # Get the port from the environment variable, default to 5000 if not set
