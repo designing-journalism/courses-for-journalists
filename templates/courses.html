@@ -108,6 +108,16 @@
                         <span class="badge bg-secondary me-1">{{ tag }}</span>
                         {% endfor %}
                     </div>
+                    <div class="mt-3">
+                        {% if course.tags %}
+                            {% for tag in course.tags.split() %}
+                            <button class="btn {% if tag in user_tags %}btn-success{% else %}btn-danger{% endif %} me-2" 
+                                    onclick="toggleUserTag('{{ tag }}', this)">
+                                {{ tag }}
+                            </button>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="card-footer bg-transparent">
                     <small class="text-muted">
