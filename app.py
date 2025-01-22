@@ -9,14 +9,16 @@ from flask_migrate import Migrate
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Ensure this is set for session management
+app.secret_key = "your_secret_key"  # Ensure this is set for session management
 
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Change this to your database URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "sqlite:///your_database.db"  # Change this to your database URI
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the database
 db.init_app(app)
@@ -24,30 +26,56 @@ db.init_app(app)
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
 
+
 # Define your routes
-@app.route('/')
+@app.route("/")
 def index():
     error_message = None
     try:
         # You can add any logic here that might raise an exception
-        return render_template('index.html', error_message=error_message)
+        return render_template("index.html", error_message=error_message)
     except Exception as e:
         error_message = str(e)  # Capture the error message
-        return render_template('index.html', error_message=error_message)
+        return render_template("index.html", error_message=error_message)
 
-@app.route('/courses', methods=['GET', 'POST'])
+
+@app.route("/courses", methods=["GET", "POST"])
 def courses_page():
-    courses = Course.query.filter_by(status='active').all()  # Fetch only active courses
+    # Fetch active courses
+    courses = Course.query.filter_by(status="active").all()
+
+    # Get the current logged-in user
+    user = get_logged_in_user()
+
+    # Split user tags by space
+    user_tags = set(user.tags.split()) if user and user.tags else set()
+
+    # Query all tags from the database
+    all_tags = Tag.query.all()
+
+    # Prepare quiz questions (as before)
     quiz_questions = [
         {
             "question_nr": 1,  # Question number
             "question": "Welke stelling past het beste bij jou?",
             "answers": [
-                {"text": "Je weet wat AI is, maar gebruikt het niet of nauwelijks bewust", "score": 1},
-                {"text": "Je gebruikt AI oppervlakkig en soms in je werk, voornamelijk generatieve AI ter ondersteuning van je werkzaamheden", "score": 2},
-                {"text": "Je gebruikt AI regelmatig in projecten en je werkzaamheden en hebt mogelijk al geëxperimenteerd met het bouwen van modellen met een ICT-er", "score": 3},
-                {"text": "Je hebt veel kennis en kan zelf AI Modellen bouwen", "score": 4}
-            ]
+                {
+                    "text": "Je weet wat AI is, maar gebruikt het niet of nauwelijks bewust",
+                    "score": 1,
+                },
+                {
+                    "text": "Je gebruikt AI oppervlakkig en soms in je werk, voornamelijk generatieve AI ter ondersteuning van je werkzaamheden",
+                    "score": 2,
+                },
+                {
+                    "text": "Je gebruikt AI regelmatig in projecten en je werkzaamheden en hebt mogelijk al geëxperimenteerd met het bouwen van modellen met een ICT-er",
+                    "score": 3,
+                },
+                {
+                    "text": "Je hebt veel kennis en kan zelf AI Modellen bouwen",
+                    "score": 4,
+                },
+            ],
         },
         {
             "question_nr": 2,  # Question number
@@ -56,20 +84,35 @@ def courses_page():
                 {"text": "Zelden tot nooit", "score": 1},
                 {"text": "Af en toe", "score": 3},
                 {"text": "Periodiek", "score": 6},
-                {"text": "Dagelijks", "score": 10}
-            ]
+                {"text": "Dagelijks", "score": 10},
+            ],
         },
         {
             "question_nr": 3,  # Question number
             "question": "Hoe schat je jouw eigen kennis en vaardigheid in rond inzet van kunstmatige intelligentie?",
             "answers": [
                 {"text": "Ik ben er niet of nauwelijks mee bekend", "score": 1},
-                {"text": "Ik ben bekend met de belangrijke concepten en termen van kunstmatige intelligentie", "score": 3},
-                {"text": "Ik weet wat generatieve AI is en welke generatieve AI-systemen in zou kunnen gebruiken in mijn werk", "score": 5},
-                {"text": "Ik heb generatieve AI-tekstsystemen, beeldgeneratiesystemen of andere generatieve AI-systemen ingezet", "score": 7},
-                {"text": "Ik heb enige ervaring met het gebruiken van AI in projecten", "score": 10},
-                {"text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT'er)", "score": 20}
-            ]
+                {
+                    "text": "Ik ben bekend met de belangrijke concepten en termen van kunstmatige intelligentie",
+                    "score": 3,
+                },
+                {
+                    "text": "Ik weet wat generatieve AI is en welke generatieve AI-systemen in zou kunnen gebruiken in mijn werk",
+                    "score": 5,
+                },
+                {
+                    "text": "Ik heb generatieve AI-tekstsystemen, beeldgeneratiesystemen of andere generatieve AI-systemen ingezet",
+                    "score": 7,
+                },
+                {
+                    "text": "Ik heb enige ervaring met het gebruiken van AI in projecten",
+                    "score": 10,
+                },
+                {
+                    "text": "Ik heb ervaring met het bouwen van AI-modellen (alleen of samen met een ICT'er)",
+                    "score": 20,
+                },
+            ],
         },
         {
             "question_nr": 4,  # Question number
@@ -79,68 +122,79 @@ def courses_page():
                 {"text": "Data analysis and cleaning", "topic": "DACL"},
                 {"text": "AI, ethiek en maatschappelijke gevolgen", "topic": "AIETHIC"},
                 {"text": "Generatieve AI & Prompting", "topic": "GENAI"},
-            ]
+            ],
         },
     ]
 
-    search_text = request.form.get('search_text', '')
-    level = request.form.get('level', '')
-    quiz_answers = request.form.getlist('quiz_answers')  # Assuming quiz answers are sent as a list
-
-    user = get_logged_in_user()  # Get the current logged-in user
-    courses = Course.query.filter_by(status='active').all()
-
     # Calculate relevancy points
-    sorted_courses = calculate_relevancy_points(user, courses, search_text, level, quiz_answers)
+    search_text = request.form.get("search_text", "")
+    level = request.form.get("level", "")
+    quiz_answers = request.form.getlist("quiz_answers")
+    sorted_courses = calculate_relevancy_points(
+        user, courses, search_text, level, quiz_answers
+    )
 
-    # Split user tags by space
-    user_tags = user.tags.split() if user and user.tags else []
+    return render_template(
+        "courses.html",
+        courses=sorted_courses,
+        user_tags=user_tags,
+        all_tags=all_tags,
+        quiz_questions=quiz_questions,
+    )
 
-    # Query all tags from the database
-    all_tags = Tag.query.all()
 
-    return render_template('courses.html', courses=sorted_courses, user_tags=user_tags, all_tags=all_tags, quiz_questions=quiz_questions)
-
-@app.route('/about')
+@app.route("/about")
 def about_page():
-    return render_template('about.html')
+    return render_template("about.html")
 
-@app.route('/api/courses')
+
+@app.route("/api/courses")
 def get_courses():
     try:
-        courses = Course.query.filter_by(status='active').all()  # Fetch only active courses
+        courses = Course.query.filter_by(
+            status="active"
+        ).all()  # Fetch only active courses
         # Convert each course instance to a dictionary
-        return jsonify([{
-            'id': course.id,
-            'title': course.title,
-            'description': course.description,
-            'duration': course.duration,
-            'level': course.level,
-            'status': course.status
-        } for course in courses])  # Adjust as necessary
+        return jsonify(
+            [
+                {
+                    "id": course.id,
+                    "title": course.title,
+                    "description": course.description,
+                    "duration": course.duration,
+                    "level": course.level,
+                    "status": course.status,
+                }
+                for course in courses
+            ]
+        )  # Adjust as necessary
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/manage_courses', methods=['GET', 'POST'])
+
+@app.route("/manage_courses", methods=["GET", "POST"])
 def manage_courses():
     # Example: Get a specific course by ID
-    course_id = request.args.get('course_id')
+    course_id = request.args.get("course_id")
     course = Course.query.get(course_id) if course_id else None
 
     courses = Course.query.all()
     tags = Tag.query.all()
-    return render_template('manage_courses.html', courses=courses, tags=tags, course=course)
+    return render_template(
+        "manage_courses.html", courses=courses, tags=tags, course=course
+    )
 
-@app.route('/manage_users', methods=['GET', 'POST'])
+
+@app.route("/manage_users", methods=["GET", "POST"])
 def manage_users():
-    if request.method == 'POST':
+    if request.method == "POST":
         # Handle form submission for adding or editing users
-        username = request.form.get('username')
-        email = request.form.get('email')
-        tags = request.form.get('tags')  # New field for tags
+        username = request.form.get("username")
+        email = request.form.get("email")
+        tags = request.form.get("tags")  # New field for tags
 
         # Check if we are editing an existing user
-        user_id = request.form.get('user_id')
+        user_id = request.form.get("user_id")
         if user_id:
             # Update existing user
             user = User.query.get(user_id)
@@ -155,57 +209,63 @@ def manage_users():
             db.session.add(new_user)
             db.session.commit()
 
-        return redirect('/manage_users')  # Redirect to the same page after submission
+        return redirect("/manage_users")  # Redirect to the same page after submission
 
     # Fetch all users for display
     users = User.query.all()
-    return render_template('manage_users.html', users=users)
+    return render_template("manage_users.html", users=users)
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']  # Still capture the password input
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]  # Still capture the password input
         # Bypass password verification
         user = User.query.filter_by(username=username).first()
         if user:  # Assume login is successful if the user exists
-            session['username'] = username  # Store the username in the session
-            return redirect(url_for('index'))  # Redirect to the homepage or another page
+            session["username"] = username  # Store the username in the session
+            return redirect(
+                url_for("index")
+            )  # Redirect to the homepage or another page
         else:
             # Handle login failure (e.g., show an error message)
-            return render_template('login.html', error="User not found")
-    return render_template('login.html')  # Render the login template
+            return render_template("login.html", error="User not found")
+    return render_template("login.html")  # Render the login template
 
-@app.route('/logout')
+
+@app.route("/logout")
 def logout():
-    session.pop('username', None)  # Verwijder de gebruikersnaam uit de sessie
-    return redirect(url_for('index'))  # Redirect naar de hoofdpagina
+    session.pop("username", None)  # Verwijder de gebruikersnaam uit de sessie
+    return redirect(url_for("index"))  # Redirect naar de hoofdpagina
 
-@app.route('/remove_tag', methods=['POST'])
+
+@app.route("/remove_tag", methods=["POST"])
 def remove_tag():
-    tag_to_remove = request.form.get('tag')
+    tag_to_remove = request.form.get("tag")
     user = get_logged_in_user()
 
     if user and tag_to_remove:
         # Split the tags, remove the specified tag, and update the user
         user_tags = set(user.tags.split())
         user_tags.discard(tag_to_remove)  # Remove the tag if it exists
-        user.tags = ' '.join(user_tags)  # Rejoin the tags into a string
+        user.tags = " ".join(user_tags)  # Rejoin the tags into a string
         db.session.commit()
         return jsonify(success=True, message="Tag removed successfully.")
-    
+
     return jsonify(success=False, message="Failed to remove tag.")
 
-@app.route('/collect_tags', methods=['POST'])
+
+@app.route("/collect_tags", methods=["POST"])
 def collect_tags():
     # Start een database sessie
     with db.session.begin():
         # Haal alle courses op
         courses = Course.query.all()
-        
+
         # Set om unieke tags op te slaan
         unique_tags = set()
-        
+
         # Loop door elke course en verzamel tags
         for course in courses:
             if course.tags:
@@ -213,7 +273,7 @@ def collect_tags():
                 tags = course.tags.split()
                 # Voeg elke tag toe aan de set van unieke tags
                 unique_tags.update(tags)
-        
+
         # Voeg unieke tags toe aan de Tags tabel
         for tag_name in unique_tags:
             # Controleer of de tag al bestaat
@@ -222,7 +282,7 @@ def collect_tags():
                 # Voeg de nieuwe tag toe
                 new_tag = Tag(tag_name=tag_name)
                 db.session.add(new_tag)
-        
+
         # Commit de sessie
         try:
             db.session.commit()
@@ -230,26 +290,28 @@ def collect_tags():
         except IntegrityError:
             db.session.rollback()
             print("Er is een fout opgetreden bij het toevoegen van tags.")
-    
-    return redirect(url_for('show_collected_tags'))
 
-@app.route('/show_collected_tags')
+    return redirect(url_for("show_collected_tags"))
+
+
+@app.route("/show_collected_tags")
 def show_collected_tags():
     tags = Tag.query.all()
-    return render_template('show_collected_tags.html', tags=tags)
+    return render_template("show_collected_tags.html", tags=tags)
 
-@app.route('/save_course', methods=['POST'])
+
+@app.route("/save_course", methods=["POST"])
 def save_course():
     # Retrieve form data
-    title = request.form.get('title')
-    description = request.form.get('description')
-    duration = request.form.get('duration')
-    level = request.form.get('level')
-    status = request.form.get('status')
-    tags = request.form.get('tags')
+    title = request.form.get("title")
+    description = request.form.get("description")
+    duration = request.form.get("duration")
+    level = request.form.get("level")
+    status = request.form.get("status")
+    tags = request.form.get("tags")
 
     # Create a new course or update an existing one
-    course_id = request.form.get('course_id')
+    course_id = request.form.get("course_id")
     if course_id:
         # Update existing course
         course = Course.query.get(course_id)
@@ -268,7 +330,7 @@ def save_course():
             duration=duration,
             level=level,
             status=status,
-            tags=tags
+            tags=tags,
         )
         db.session.add(new_course)
 
@@ -276,39 +338,48 @@ def save_course():
     db.session.commit()
 
     # Redirect back to manage courses page
-    return redirect(url_for('manage_courses'))
+    return redirect(url_for("manage_courses"))
 
-@app.route('/add_tag', methods=['POST'])
+
+@app.route("/add_tag", methods=["POST"])
 def add_tag():
-    if session.get('username') == 'admin':
-        tag_name = request.form.get('tag_name')
-        if tag_name:
-            new_tag = Tag(tag_name=tag_name)
-            db.session.add(new_tag)
-            db.session.commit()
-    return redirect(url_for('show_collected_tags'))
+    tag_to_add = request.form.get("tag")
+    user = get_logged_in_user()
 
-@app.route('/edit_tag/<int:tag_id>', methods=['POST'])
+    if user and tag_to_add:
+        # Split the tags, add the specified tag, and update the user
+        user_tags = set(user.tags.split())
+        user_tags.add(tag_to_add)  # Add the tag
+        user.tags = " ".join(user_tags)  # Rejoin the tags into a string
+        db.session.commit()
+        return jsonify(success=True, message="Tag added successfully.")
+
+    return jsonify(success=False, message="Failed to add tag.")
+
+
+@app.route("/edit_tag/<int:tag_id>", methods=["POST"])
 def edit_tag(tag_id):
-    if session.get('username') == 'admin':
-        tag_name = request.form.get('tag_name')
+    if session.get("username") == "admin":
+        tag_name = request.form.get("tag_name")
         tag = Tag.query.get(tag_id)
         if tag and tag_name:
             tag.tag_name = tag_name
             db.session.commit()
-    return redirect(url_for('show_collected_tags'))
+    return redirect(url_for("show_collected_tags"))
 
-@app.route('/delete_tag/<int:tag_id>', methods=['POST'])
+
+@app.route("/delete_tag/<int:tag_id>", methods=["POST"])
 def delete_tag(tag_id):
-    if session.get('username') == 'admin':
+    if session.get("username") == "admin":
         tag = Tag.query.get(tag_id)
         if tag:
             db.session.delete(tag)
             db.session.commit()
-    return redirect(url_for('show_collected_tags'))
+    return redirect(url_for("show_collected_tags"))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Get the port from the environment variable, default to 5000 if not set
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get("PORT", 5001))
     # Run the app on the specified port
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
