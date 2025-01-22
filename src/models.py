@@ -17,6 +17,11 @@ class Course(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
+    @property
+    def tag_list(self):
+        """Convert tags string to list"""
+        return [tag.strip() for tag in self.tags.split(',')] if self.tags else []
+
 class User(db.Model):
     __tablename__ = 'users'
     

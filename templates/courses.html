@@ -30,7 +30,7 @@
 
 <!-- Filter Section -->
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-4">
         <input 
             type="text" 
             class="form-control" 
@@ -40,12 +40,29 @@
         >
     </div>
     <div class="col-md-4">
-        <select class="form-select btn btn-secondary" id="levelFilter" onchange="filterCourses()">
+        <select class="form-select" id="levelFilter" onchange="filterCourses()">
             <option value="">Alle niveaus</option>
             <option value="Beginner">Beginner</option>
             <option value="Intermediate">Intermediate</option>
             <option value="Advanced">Advanced</option>
         </select>
+    </div>
+    <div class="col-md-4">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="tagFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Filter op tags
+            </button>
+            <div class="dropdown-menu p-2" style="max-height: 300px; overflow-y: auto;">
+                {% for tag in all_tags %}
+                <div class="form-check">
+                    <input class="form-check-input tag-filter-checkbox" type="checkbox" value="{{ tag.tag_name }}" id="tag{{ loop.index }}" onchange="filterCourses()">
+                    <label class="form-check-label" for="tag{{ loop.index }}">
+                        {{ tag.tag_name }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 
@@ -88,7 +105,9 @@
 <div class="container">
     <div class="row g-4" id="coursesList">
         {% for course in courses %}
-        <div class="col-12 course-item" data-level="{{ course.level }}">
+        <div class="col-12 course-item" 
+             data-level="{{ course.level }}"
+             data-tags="{{ ','.join(course.tag_list) if course.tag_list else '' }}">
             <div class="card h-100 shadow-sm course-card">
                 <div class="card-body">
                     <h5 class="card-title">{{ course.title }}</h5>
@@ -102,6 +121,9 @@
                         <span class="badge bg-info">
                             <i class="bi bi-bar-chart-fill"></i> {{ course.level }}
                         </span>
+                        {% for tag in course.tag_list %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
@@ -119,16 +141,40 @@
     function filterCourses() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const levelFilter = document.getElementById('levelFilter').value;
+        const selectedTags = Array.from(document.querySelectorAll('.tag-filter-checkbox:checked'))
+                                .map(checkbox => checkbox.value.toLowerCase().trim());
         const courses = document.querySelectorAll('.course-item');
 
         courses.forEach(course => {
             const title = course.querySelector('.card-title').textContent.toLowerCase();
             const level = course.getAttribute('data-level');
+            const tagsAttribute = course.getAttribute('data-tags');
+            
+            // Changed this to split on spaces instead of commas
+            const courseTags = tagsAttribute ? 
+                             tagsAttribute.split(' ')
+                                        .map(tag => tag.toLowerCase().trim())
+                                        .filter(tag => tag.length > 0) :
+                             [];
+
+            // Debug logging
+            console.log('Raw tags attribute:', tagsAttribute);
+            console.log('Course:', title);
+            console.log('Course tags:', courseTags);
+            console.log('Selected tags:', selectedTags);
 
             const matchesSearch = title.includes(searchInput);
             const matchesLevel = levelFilter === '' || level === levelFilter;
+            const matchesTags = selectedTags.length === 0 || 
+                              selectedTags.every(selectedTag => courseTags.includes(selectedTag));
 
-            if (matchesSearch && matchesLevel) {
+            console.log('Matches:', {
+                search: matchesSearch,
+                level: matchesLevel,
+                tags: matchesTags
+            });
+
+            if (matchesSearch && matchesLevel && matchesTags) {
                 course.style.display = '';
             } else {
                 course.style.display = 'none';
