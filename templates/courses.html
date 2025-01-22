@@ -16,18 +16,6 @@
     <hr/>
 </div>
 
-<!-- All Tags Section -->
-<div class="mb-4">
-    <h3>Alle Tags</h3>
-    <div id="allTagsContainer">
-        {% for tag in all_tags %}
-        <button class="btn mb-2 {{ 'btn-success' if tag.tag_name in user_tags else 'btn-danger' }}" onclick="toggleUserTag('{{ tag.tag_name }}', this)">{{ tag.tag_name }}</button>
-        {% endfor %}
-    </div>
-    <hr/>
-</div>
-
-
 <!-- Filter Section -->
 <div class="row mb-4">
     <div class="col-md-4">
@@ -47,25 +35,20 @@
             <option value="Advanced">Advanced</option>
         </select>
     </div>
-    <div class="col-md-4">
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" id="tagFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Filter op tags
-            </button>
-            <div class="dropdown-menu p-2" style="max-height: 300px; overflow-y: auto;">
-                {% for tag in all_tags %}
-                <div class="form-check">
-                    <input class="form-check-input tag-filter-checkbox" type="checkbox" value="{{ tag.tag_name }}" id="tag{{ loop.index }}" onchange="filterCourses()">
-                    <label class="form-check-label" for="tag{{ loop.index }}">
-                        {{ tag.tag_name }}
-                    </label>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
 </div>
 
+<!-- All Tags Section -->
+<div class="mb-4">
+    <h3>Alle Tags</h3>
+    <div id="allTagsContainer">
+        {% for tag in all_tags %}
+        <button class="btn mb-2 {{ 'btn-success' if tag.tag_name in user_tags else 'btn-danger' }}" 
+                onclick="toggleTagFilter(this)" 
+                data-tag="{{ tag.tag_name }}">{{ tag.tag_name }}</button>
+        {% endfor %}
+    </div>
+    <hr/>
+</div>
 
 <!-- Quiz Questions Section -->
 <div class="container mb-4">
@@ -138,11 +121,44 @@
 </div>
 
 <script>
+    function toggleTagFilter(button) {
+        const tagName = button.getAttribute('data-tag');
+        const isTagSelected = button.classList.contains('btn-success');
+        
+        // Toggle button appearance
+        button.classList.toggle('btn-danger');
+        button.classList.toggle('btn-success');
+        
+        // Update user tags on server
+        const url = isTagSelected ? '/remove_tag' : '/add_tag';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: new URLSearchParams({ tag: tagName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                // Revert button state if server update fails
+                button.classList.toggle('btn-danger');
+                button.classList.toggle('btn-success');
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+
+        // Filter courses
+        filterCourses();
+    }
+
     function filterCourses() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const levelFilter = document.getElementById('levelFilter').value;
-        const selectedTags = Array.from(document.querySelectorAll('.tag-filter-checkbox:checked'))
-                                .map(checkbox => checkbox.value.toLowerCase().trim());
+        const selectedTags = Array.from(document.querySelectorAll('.btn-success'))
+                                .map(button => button.getAttribute('data-tag').toLowerCase().trim());
         const courses = document.querySelectorAll('.course-item');
 
         courses.forEach(course => {
@@ -150,29 +166,16 @@
             const level = course.getAttribute('data-level');
             const tagsAttribute = course.getAttribute('data-tags');
             
-            // Changed this to split on spaces instead of commas
             const courseTags = tagsAttribute ? 
                              tagsAttribute.split(' ')
                                         .map(tag => tag.toLowerCase().trim())
                                         .filter(tag => tag.length > 0) :
                              [];
 
-            // Debug logging
-            console.log('Raw tags attribute:', tagsAttribute);
-            console.log('Course:', title);
-            console.log('Course tags:', courseTags);
-            console.log('Selected tags:', selectedTags);
-
             const matchesSearch = title.includes(searchInput);
             const matchesLevel = levelFilter === '' || level === levelFilter;
             const matchesTags = selectedTags.length === 0 || 
                               selectedTags.every(selectedTag => courseTags.includes(selectedTag));
-
-            console.log('Matches:', {
-                search: matchesSearch,
-                level: matchesLevel,
-                tags: matchesTags
-            });
 
             if (matchesSearch && matchesLevel && matchesTags) {
                 course.style.display = '';
@@ -204,34 +207,6 @@
             }
         })
         .catch(error => console.error('Error:', error));
-    }
-
-    function toggleUserTag(tagName, button) {
-        const isTagInUserTags = button.classList.contains('btn-success');
-        const url = isTagInUserTags ? '/remove_tag' : '/add_tag';
-        const method = 'POST';
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        };
-        const body = new URLSearchParams({ tag: tagName });
-
-        fetch(url, { method, headers, body })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (isTagInUserTags) {
-                        button.classList.remove('btn-success');
-                        button.classList.add('btn-danger');
-                    } else {
-                        button.classList.remove('btn-danger');
-                        button.classList.add('btn-success');
-                    }
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}
