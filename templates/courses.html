@@ -10,7 +10,11 @@
     <h3>Interesse in (klik om te verwijderen)</h3>
     <div id="userTagsContainer">
         {% for tag in user_tags %}
-        <button class="btn btn-outline-primary mb-2" onclick="removeTag('{{ tag }}')">{{ tag }}</button>
+        <button class="btn btn-success mb-2 me-2" 
+                onclick="toggleTagFilter(this)"
+                data-tag="{{ tag }}">
+            {{ tag }}
+        </button>
         {% endfor %}
     </div>
     <hr/>
@@ -90,7 +94,7 @@
         {% for course in courses %}
         <div class="col-12 course-item" 
              data-level="{{ course.level }}"
-             data-tags="{{ ','.join(course.tag_list) if course.tag_list else '' }}">
+             data-tags="{{ ' '.join(course.tag_list) if course.tag_list else '' }}">
             <div class="card h-100 shadow-sm course-card">
                 <div class="card-body">
                     <h5 class="card-title">{{ course.title }}</h5>
@@ -112,7 +116,8 @@
                         {% if course.tags %}
                             {% for tag in course.tags.split() %}
                             <button class="btn {% if tag in user_tags %}btn-success{% else %}btn-danger{% endif %} me-2" 
-                                    onclick="toggleUserTag('{{ tag }}', this)">
+                                    onclick="toggleTagFilter(this)" 
+                                    data-tag="{{ tag }}">
                                 {{ tag }}
                             </button>
                             {% endfor %}
@@ -133,14 +138,20 @@
 <script>
     function toggleTagFilter(button) {
         const tagName = button.getAttribute('data-tag');
-        const isTagSelected = button.classList.contains('btn-success');
+        const isCurrentlySelected = button.classList.contains('btn-success');
+        const willBeSelected = !isCurrentlySelected; // The new state we want
         
-        // Toggle button appearance
-        button.classList.toggle('btn-danger');
-        button.classList.toggle('btn-success');
+        // Find all buttons with the same tag
+        const allTagButtons = document.querySelectorAll(`button[data-tag="${tagName}"]`);
+        
+        // Update all buttons to the new state
+        allTagButtons.forEach(tagButton => {
+            tagButton.classList.toggle('btn-danger', !willBeSelected);
+            tagButton.classList.toggle('btn-success', willBeSelected);
+        });
         
         // Update user tags on server
-        const url = isTagSelected ? '/remove_tag' : '/add_tag';
+        const url = isCurrentlySelected ? '/remove_tag' : '/add_tag';
         fetch(url, {
             method: 'POST',
             headers: {
@@ -152,9 +163,11 @@
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                // Revert button state if server update fails
-                button.classList.toggle('btn-danger');
-                button.classList.toggle('btn-success');
+                // Revert all buttons if server update fails
+                allTagButtons.forEach(tagButton => {
+                    tagButton.classList.toggle('btn-danger', isCurrentlySelected);
+                    tagButton.classList.toggle('btn-success', !isCurrentlySelected);
+                });
                 alert(data.message);
             }
         })
