@@ -10,27 +10,19 @@
     <h3>Interesse in (klik om te verwijderen)</h3>
     <div id="userTagsContainer">
         {% for tag in user_tags %}
-        <button class="btn btn-outline-primary mb-2" onclick="removeTag('{{ tag }}')">{{ tag }}</button>
+        <button class="btn btn-success mb-2 me-2" 
+                onclick="toggleTagFilter(this)"
+                data-tag="{{ tag }}">
+            {{ tag }}
+        </button>
         {% endfor %}
     </div>
     <hr/>
 </div>
-
-<!-- All Tags Section -->
-<div class="mb-4">
-    <h3>Alle Tags</h3>
-    <div id="allTagsContainer">
-        {% for tag in all_tags %}
-        <button class="btn mb-2 {{ 'btn-success' if tag.tag_name in user_tags else 'btn-danger' }}" onclick="toggleUserTag('{{ tag.tag_name }}', this)">{{ tag.tag_name }}</button>
-        {% endfor %}
-    </div>
-    <hr/>
-</div>
-
 
 <!-- Filter Section -->
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-4">
         <input 
             type="text" 
             class="form-control" 
@@ -40,7 +32,7 @@
         >
     </div>
     <div class="col-md-4">
-        <select class="form-select btn btn-secondary" id="levelFilter" onchange="filterCourses()">
+        <select class="form-select" id="levelFilter" onchange="filterCourses()">
             <option value="">Alle niveaus</option>
             <option value="Beginner">Beginner</option>
             <option value="Intermediate">Intermediate</option>
@@ -49,6 +41,18 @@
     </div>
 </div>
 
+<!-- All Tags Section -->
+<div class="mb-4">
+    <h3>Alle Tags</h3>
+    <div id="allTagsContainer">
+        {% for tag in all_tags %}
+        <button class="btn mb-2 {{ 'btn-success' if tag.tag_name in user_tags else 'btn-danger' }}" 
+                onclick="toggleTagFilter(this)" 
+                data-tag="{{ tag.tag_name }}">{{ tag.tag_name }}</button>
+        {% endfor %}
+    </div>
+    <hr/>
+</div>
 
 <!-- Quiz Questions Section -->
 <div class="container mb-4">
@@ -88,7 +92,9 @@
 <div class="container">
     <div class="row g-4" id="coursesList">
         {% for course in courses %}
-        <div class="col-12 course-item" data-level="{{ course.level }}">
+        <div class="col-12 course-item" 
+             data-level="{{ course.level }}"
+             data-tags="{{ ' '.join(course.tag_list) if course.tag_list else '' }}">
             <div class="card h-100 shadow-sm course-card">
                 <div class="card-body">
                     <h5 class="card-title">{{ course.title }}</h5>
@@ -102,12 +108,16 @@
                         <span class="badge bg-info">
                             <i class="bi bi-bar-chart-fill"></i> {{ course.level }}
                         </span>
+                        {% for tag in course.tag_list %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
                     </div>
                     <div class="mt-3">
                         {% if course.tags %}
                             {% for tag in course.tags.split() %}
                             <button class="btn {% if tag in user_tags %}btn-success{% else %}btn-danger{% endif %} me-2" 
-                                    onclick="toggleUserTag('{{ tag }}', this)">
+                                    onclick="toggleTagFilter(this)" 
+                                    data-tag="{{ tag }}">
                                 {{ tag }}
                             </button>
                             {% endfor %}
@@ -126,19 +136,71 @@
 </div>
 
 <script>
+    function toggleTagFilter(button) {
+        const tagName = button.getAttribute('data-tag');
+        const isCurrentlySelected = button.classList.contains('btn-success');
+        const willBeSelected = !isCurrentlySelected; // The new state we want
+        
+        // Find all buttons with the same tag
+        const allTagButtons = document.querySelectorAll(`button[data-tag="${tagName}"]`);
+        
+        // Update all buttons to the new state
+        allTagButtons.forEach(tagButton => {
+            tagButton.classList.toggle('btn-danger', !willBeSelected);
+            tagButton.classList.toggle('btn-success', willBeSelected);
+        });
+        
+        // Update user tags on server
+        const url = isCurrentlySelected ? '/remove_tag' : '/add_tag';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: new URLSearchParams({ tag: tagName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                // Revert all buttons if server update fails
+                allTagButtons.forEach(tagButton => {
+                    tagButton.classList.toggle('btn-danger', isCurrentlySelected);
+                    tagButton.classList.toggle('btn-success', !isCurrentlySelected);
+                });
+                alert(data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+
+        // Filter courses
+        filterCourses();
+    }
+
     function filterCourses() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const levelFilter = document.getElementById('levelFilter').value;
+        const selectedTags = Array.from(document.querySelectorAll('.btn-success'))
+                                .map(button => button.getAttribute('data-tag').toLowerCase().trim());
         const courses = document.querySelectorAll('.course-item');
 
         courses.forEach(course => {
             const title = course.querySelector('.card-title').textContent.toLowerCase();
             const level = course.getAttribute('data-level');
+            const tagsAttribute = course.getAttribute('data-tags');
+            
+            const courseTags = tagsAttribute ? 
+                             tagsAttribute.split(' ')
+                                        .map(tag => tag.toLowerCase().trim())
+                                        .filter(tag => tag.length > 0) :
+                             [];
 
             const matchesSearch = title.includes(searchInput);
             const matchesLevel = levelFilter === '' || level === levelFilter;
+            const matchesTags = selectedTags.length === 0 || 
+                              selectedTags.every(selectedTag => courseTags.includes(selectedTag));
 
-            if (matchesSearch && matchesLevel) {
+            if (matchesSearch && matchesLevel && matchesTags) {
                 course.style.display = '';
             } else {
                 course.style.display = 'none';
@@ -168,34 +230,6 @@
             }
         })
         .catch(error => console.error('Error:', error));
-    }
-
-    function toggleUserTag(tagName, button) {
-        const isTagInUserTags = button.classList.contains('btn-success');
-        const url = isTagInUserTags ? '/remove_tag' : '/add_tag';
-        const method = 'POST';
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        };
-        const body = new URLSearchParams({ tag: tagName });
-
-        fetch(url, { method, headers, body })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    if (isTagInUserTags) {
-                        button.classList.remove('btn-success');
-                        button.classList.add('btn-danger');
-                    } else {
-                        button.classList.remove('btn-danger');
-                        button.classList.add('btn-success');
-                    }
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
     }
 </script>
 {% endblock %}
