@@ -28,16 +28,8 @@
             class="form-control" 
             id="searchInput" 
             placeholder="Zoek cursussen..."
-            oninput="filterCourses()"
+            oninput="sortCourses()"
         >
-    </div>
-    <div class="col-md-4">
-        <select class="form-select" id="levelFilter" onchange="filterCourses()">
-            <option value="">Alle niveaus</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-        </select>
     </div>
 </div>
 
@@ -53,39 +45,6 @@
     </div>
     <hr/>
 </div>
-
-<!-- Quiz Questions Section -->
-<div class="container mb-4">
-    <h2 class="text-center">Quiz Vragen</h2>
-    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#quizCollapse" aria-expanded="true" aria-controls="quizCollapse">
-        Toggle Quiz Questions
-    </button>
-    <div class="collapse show" id="quizCollapse">
-        <div class="card mt-3">
-            <div class="card-body">
-                <form id="quizForm">
-                    {% if quiz_questions %}
-                        {% for question in quiz_questions %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ question.question_nr }}. {{ question.question }}</label>
-                            {% for answer in question.answers %}
-                            <div>
-                                <input type="radio" name="question_{{ question.question_nr }}" value="{{ answer.score }}" id="answer_{{ question.question_nr }}_{{ loop.index0 }}">
-                                <label for="answer_{{ question.question_nr }}_{{ loop.index0 }}">{{ answer.text }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p>No quiz questions available.</p>
-                    {% endif %}
-                    <button type="submit" class="btn btn-primary">Submit Quiz</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Title for the Course List -->
 <h2 class="text-center mb-4">Selectie</h2>
 <!-- Courses Container -->
@@ -173,18 +132,20 @@
         })
         .catch(error => console.error('Error:', error));
 
-        // Filter courses
-        filterCourses();
+        // Sort courses
+        sortCourses();
     }
 
-    function filterCourses() {
+    function sortCourses() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const levelFilter = document.getElementById('levelFilter').value;
         const selectedTags = Array.from(document.querySelectorAll('.btn-success'))
                                 .map(button => button.getAttribute('data-tag').toLowerCase().trim());
-        const courses = document.querySelectorAll('.course-item');
+        const coursesList = document.getElementById('coursesList');
+        const courses = Array.from(document.querySelectorAll('.course-item'));
 
-        courses.forEach(course => {
+        // Calculate score and create pairs of [course, score]
+        const coursesWithScores = courses.map(course => {
             const title = course.querySelector('.card-title').textContent.toLowerCase();
             const level = course.getAttribute('data-level');
             const tagsAttribute = course.getAttribute('data-tags');
@@ -197,14 +158,27 @@
 
             const matchesSearch = title.includes(searchInput);
             const matchesLevel = levelFilter === '' || level === levelFilter;
-            const matchesTags = selectedTags.length === 0 || 
-                              selectedTags.every(selectedTag => courseTags.includes(selectedTag));
+            
+            // Calculate how many selected tags match this course
+            const matchingTagsCount = selectedTags.filter(tag => courseTags.includes(tag)).length;
 
-            if (matchesSearch && matchesLevel && matchesTags) {
-                course.style.display = '';
-            } else {
-                course.style.display = 'none';
-            }
+            // Calculate score: matching tags count + bonuses for search and level matches
+            let score = matchingTagsCount;
+            if (matchesSearch) score += 1000; // Prioritize search matches
+            if (matchesLevel) score += 100;   // Then level matches
+            
+            // Hide course if it doesn't match search or level
+            course.style.display = matchesSearch && matchesLevel ? '' : 'none';
+
+            return [course, score];
+        });
+
+        // Sort courses by score (highest first)
+        coursesWithScores.sort((a, b) => b[1] - a[1]);
+
+        // Reorder the DOM elements
+        coursesWithScores.forEach(([course, score]) => {
+            coursesList.appendChild(course);
         });
     }
 
