@@ -126,13 +126,8 @@ def courses_page():
         },
     ]
 
-    # Calculate relevancy points
-    search_text = request.form.get("search_text", "")
-    level = request.form.get("level", "")
-    quiz_answers = request.form.getlist("quiz_answers")
-    sorted_courses = calculate_relevancy_points(
-        user, courses, search_text, level, quiz_answers
-    )
+    # Calculate relevancy points - simplified version
+    sorted_courses = calculate_relevancy_points(courses, user_tags)
 
     return render_template(
         "courses.html",
@@ -151,23 +146,17 @@ def about_page():
 @app.route("/api/courses")
 def get_courses():
     try:
-        courses = Course.query.filter_by(
-            status="active"
-        ).all()  # Fetch only active courses
-        # Convert each course instance to a dictionary
-        return jsonify(
-            [
-                {
-                    "id": course.id,
-                    "title": course.title,
-                    "description": course.description,
-                    "duration": course.duration,
-                    "level": course.level,
-                    "status": course.status,
-                }
-                for course in courses
-            ]
-        )  # Adjust as necessary
+        courses = Course.query.filter_by(status="active").all()
+        return jsonify([
+            {
+                "id": course.id,
+                "title": course.title,
+                "description": course.description,
+                "duration": course.duration,
+                "status": course.status,
+            }
+            for course in courses
+        ])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -302,43 +291,44 @@ def show_collected_tags():
 
 @app.route("/save_course", methods=["POST"])
 def save_course():
-    # Retrieve form data
-    title = request.form.get("title")
-    description = request.form.get("description")
-    duration = request.form.get("duration")
-    level = request.form.get("level")
-    status = request.form.get("status")
-    tags = request.form.get("tags")
+    try:
+        # Retrieve form data
+        title = request.form.get("title")
+        description = request.form.get("description")
+        duration = request.form.get("duration")
+        status = request.form.get("status")
+        tags = request.form.get("tags")
 
-    # Create a new course or update an existing one
-    course_id = request.form.get("course_id")
-    if course_id:
-        # Update existing course
-        course = Course.query.get(course_id)
-        if course:
-            course.title = title
-            course.description = description
-            course.duration = duration
-            course.level = level
-            course.status = status
-            course.tags = tags
-    else:
-        # Add new course
-        new_course = Course(
-            title=title,
-            description=description,
-            duration=duration,
-            level=level,
-            status=status,
-            tags=tags,
-        )
-        db.session.add(new_course)
+        # Create a new course or update an existing one
+        course_id = request.form.get("course_id")
+        if course_id:
+            # Update existing course
+            course = Course.query.get(course_id)
+            if course:
+                course.title = title
+                course.description = description
+                course.duration = duration
+                course.status = status
+                course.tags = tags
+        else:
+            # Add new course
+            new_course = Course(
+                title=title,
+                description=description,
+                duration=duration,
+                status=status,
+                tags=tags
+            )
+            db.session.add(new_course)
 
-    # Commit the session
-    db.session.commit()
-
-    # Redirect back to manage courses page
-    return redirect(url_for("manage_courses"))
+        # Commit the session
+        db.session.commit()
+        return redirect(url_for("manage_courses"))
+    
+    except Exception as e:
+        print(f"Error saving course: {str(e)}")  # For debugging
+        db.session.rollback()
+        return redirect(url_for("manage_courses"))
 
 
 @app.route("/add_tag", methods=["POST"])

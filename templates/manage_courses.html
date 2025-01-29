@@ -22,14 +22,6 @@
         <input type="text" class="form-control" name="duration" id="duration" required>
     </div>
     <div class="mb-3">
-        <label for="level" class="form-label">Level</label>
-        <select class="form-select" name="level" id="level" required>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-        </select>
-    </div>
-    <div class="mb-3">
         <label for="status" class="form-label">Status</label>
         <select class="form-select" name="status" id="status" required>
             <option value="active">Active</option>
@@ -67,7 +59,6 @@
             <th>Title</th>
             <th>Description</th>
             <th>Duration</th>
-            <th>Level</th>
             <th>Status</th>
             <th>Tags</th>
             <th>Actions</th>
@@ -80,11 +71,10 @@
             <td>{{ course.title }}</td>
             <td>{{ course.description }}</td>
             <td>{{ course.duration }}</td>
-            <td>{{ course.level }}</td>
             <td>{{ course.status }}</td>
             <td>{{ course.tags }}</td>
             <td>
-                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.level }}', '{{ course.status }}', '{{ course.tags }}')">Edit</button>
+                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.status }}', {{ course.tags|tojson }})">Edit</button>
             </td>
         </tr>
         {% endfor %}
@@ -92,12 +82,11 @@
 </table>
 
 <script>
-    function editCourse(id, title, description, duration, level, status, tags) {
+    function editCourse(id, title, description, duration, status, tags) {
         document.getElementById('course_id').value = id;
         document.getElementById('title').value = title;
         document.getElementById('description').value = description;
         document.getElementById('duration').value = duration;
-        document.getElementById('level').value = level;
         document.getElementById('status').value = status;
         document.getElementById('tags').value = tags;
 

@@ -11,7 +11,6 @@ class Course(db.Model):
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=False)
     duration = db.Column(db.String(50), nullable=False)
-    level = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), default='active')  # 'active' or 'inactive'
     tags = db.Column(db.String(255), default='')  # Default to an empty string
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
