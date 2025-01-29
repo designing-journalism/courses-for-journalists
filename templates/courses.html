@@ -31,14 +31,6 @@
             oninput="sortCourses()"
         >
     </div>
-    <div class="col-md-4">
-        <select class="form-select" id="levelFilter" onchange="sortCourses()">
-            <option value="">Alle niveaus</option>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-        </select>
-    </div>
 </div>
 
 <!-- All Tags Section -->
@@ -53,39 +45,6 @@
     </div>
     <hr/>
 </div>
-
-<!-- Quiz Questions Section -->
-<div class="container mb-4">
-    <h2 class="text-center">Quiz Vragen</h2>
-    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#quizCollapse" aria-expanded="true" aria-controls="quizCollapse">
-        Toggle Quiz Questions
-    </button>
-    <div class="collapse show" id="quizCollapse">
-        <div class="card mt-3">
-            <div class="card-body">
-                <form id="quizForm">
-                    {% if quiz_questions %}
-                        {% for question in quiz_questions %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ question.question_nr }}. {{ question.question }}</label>
-                            {% for answer in question.answers %}
-                            <div>
-                                <input type="radio" name="question_{{ question.question_nr }}" value="{{ answer.score }}" id="answer_{{ question.question_nr }}_{{ loop.index0 }}">
-                                <label for="answer_{{ question.question_nr }}_{{ loop.index0 }}">{{ answer.text }}</label>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p>No quiz questions available.</p>
-                    {% endif %}
-                    <button type="submit" class="btn btn-primary">Submit Quiz</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Title for the Course List -->
 <h2 class="text-center mb-4">Selectie</h2>
 <!-- Courses Container -->
