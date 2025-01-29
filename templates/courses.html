@@ -28,11 +28,11 @@
             class="form-control" 
             id="searchInput" 
             placeholder="Zoek cursussen..."
-            oninput="filterCourses()"
+            oninput="sortCourses()"
         >
     </div>
     <div class="col-md-4">
-        <select class="form-select" id="levelFilter" onchange="filterCourses()">
+        <select class="form-select" id="levelFilter" onchange="sortCourses()">
             <option value="">Alle niveaus</option>
             <option value="Beginner">Beginner</option>
             <option value="Intermediate">Intermediate</option>
@@ -173,18 +173,20 @@
         })
         .catch(error => console.error('Error:', error));
 
-        // Filter courses
-        filterCourses();
+        // Sort courses
+        sortCourses();
     }
 
-    function filterCourses() {
+    function sortCourses() {
         const searchInput = document.getElementById('searchInput').value.toLowerCase();
         const levelFilter = document.getElementById('levelFilter').value;
         const selectedTags = Array.from(document.querySelectorAll('.btn-success'))
                                 .map(button => button.getAttribute('data-tag').toLowerCase().trim());
-        const courses = document.querySelectorAll('.course-item');
+        const coursesList = document.getElementById('coursesList');
+        const courses = Array.from(document.querySelectorAll('.course-item'));
 
-        courses.forEach(course => {
+        // Calculate score and create pairs of [course, score]
+        const coursesWithScores = courses.map(course => {
             const title = course.querySelector('.card-title').textContent.toLowerCase();
             const level = course.getAttribute('data-level');
             const tagsAttribute = course.getAttribute('data-tags');
@@ -197,14 +199,27 @@
 
             const matchesSearch = title.includes(searchInput);
             const matchesLevel = levelFilter === '' || level === levelFilter;
-            const matchesTags = selectedTags.length === 0 || 
-                              selectedTags.every(selectedTag => courseTags.includes(selectedTag));
+            
+            // Calculate how many selected tags match this course
+            const matchingTagsCount = selectedTags.filter(tag => courseTags.includes(tag)).length;
 
-            if (matchesSearch && matchesLevel && matchesTags) {
-                course.style.display = '';
-            } else {
-                course.style.display = 'none';
-            }
+            // Calculate score: matching tags count + bonuses for search and level matches
+            let score = matchingTagsCount;
+            if (matchesSearch) score += 1000; // Prioritize search matches
+            if (matchesLevel) score += 100;   // Then level matches
+            
+            // Hide course if it doesn't match search or level
+            course.style.display = matchesSearch && matchesLevel ? '' : 'none';
+
+            return [course, score];
+        });
+
+        // Sort courses by score (highest first)
+        coursesWithScores.sort((a, b) => b[1] - a[1]);
+
+        // Reorder the DOM elements
+        coursesWithScores.forEach(([course, score]) => {
+            coursesList.appendChild(course);
         });
     }
 
