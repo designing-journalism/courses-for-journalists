@@ -22,14 +22,6 @@
         <input type="text" class="form-control" name="duration" id="duration" required>
     </div>
     <div class="mb-3">
-        <label for="level" class="form-label">Level</label>
-        <select class="form-select" name="level" id="level" required>
-            <option value="Beginner">Beginner</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Advanced">Advanced</option>
-        </select>
-    </div>
-    <div class="mb-3">
         <label for="status" class="form-label">Status</label>
         <select class="form-select" name="status" id="status" required>
             <option value="active">Active</option>
@@ -67,7 +59,6 @@
             <th>Title</th>
             <th>Description</th>
             <th>Duration</th>
-            <th>Level</th>
             <th>Status</th>
             <th>Tags</th>
             <th>Actions</th>
@@ -80,11 +71,18 @@
             <td>{{ course.title }}</td>
             <td>{{ course.description }}</td>
             <td>{{ course.duration }}</td>
-            <td>{{ course.level }}</td>
             <td>{{ course.status }}</td>
             <td>{{ course.tags }}</td>
             <td>
-                <button class="btn btn-warning" onclick="editCourse({{ course.id }}, '{{ course.title }}', '{{ course.description }}', '{{ course.duration }}', '{{ course.level }}', '{{ course.status }}', '{{ course.tags }}')">Edit</button>
+                <button class="btn btn-warning edit-course-btn" 
+                        data-id="{{ course.id }}"
+                        data-title="{{ course.title }}"
+                        data-description="{{ course.description }}"
+                        data-duration="{{ course.duration }}"
+                        data-status="{{ course.status }}"
+                        data-tags="{{ course.tags|default('') }}">
+                    Edit
+                </button>
             </td>
         </tr>
         {% endfor %}
@@ -92,27 +90,54 @@
 </table>
 
 <script>
-    function editCourse(id, title, description, duration, level, status, tags) {
-        document.getElementById('course_id').value = id;
-        document.getElementById('title').value = title;
-        document.getElementById('description').value = description;
-        document.getElementById('duration').value = duration;
-        document.getElementById('level').value = level;
-        document.getElementById('status').value = status;
-        document.getElementById('tags').value = tags;
-
-        // Update tag button colors based on the current course tags
-        const tagButtons = document.querySelectorAll('.btn');
-        tagButtons.forEach(button => {
-            const tagName = button.innerText;
-            if (tags.split(' ').includes(tagName)) {
-                button.classList.remove('btn-danger');
-                button.classList.add('btn-success');
-            } else {
-                button.classList.remove('btn-success');
-                button.classList.add('btn-danger');
-            }
+    // Add event listeners to all edit buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const editButtons = document.querySelectorAll('.edit-course-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const title = this.getAttribute('data-title');
+                const description = this.getAttribute('data-description');
+                const duration = this.getAttribute('data-duration');
+                const status = this.getAttribute('data-status');
+                const tags = this.getAttribute('data-tags');
+                
+                editCourse(id, title, description, duration, status, tags);
+            });
         });
+    });
+
+    function editCourse(id, title, description, duration, status, tags) {
+        try {
+            document.getElementById('course_id').value = id;
+            document.getElementById('title').value = title;
+            document.getElementById('description').value = description;
+            document.getElementById('duration').value = duration;
+            document.getElementById('status').value = status;
+            document.getElementById('tags').value = tags || '';
+
+            // Update tag buttons if they exist
+            const tagButtons = document.querySelectorAll('[data-tag]');
+            const courseTags = (tags || '').split(' ').map(tag => tag.trim());
+            
+            tagButtons.forEach(button => {
+                const tagName = button.getAttribute('data-tag');
+                if (courseTags.includes(tagName)) {
+                    button.classList.remove('btn-danger');
+                    button.classList.add('btn-success');
+                } else {
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-danger');
+                }
+            });
+
+            // Scroll to form
+            const form = document.querySelector('form');
+            form.scrollIntoView({ behavior: 'smooth' });
+
+        } catch (error) {
+            console.error('Error in editCourse:', error);
+        }
     }
 
     function toggleTag(tagName) {
