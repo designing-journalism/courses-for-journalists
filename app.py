@@ -292,41 +292,57 @@ def show_collected_tags():
 @app.route("/save_course", methods=["POST"])
 def save_course():
     try:
+        # Print form data for debugging
+        print("Form data received:", dict(request.form))
+        
         # Retrieve form data
+        course_id = request.form.get("course_id")
         title = request.form.get("title")
         description = request.form.get("description")
         duration = request.form.get("duration")
         status = request.form.get("status")
         tags = request.form.get("tags")
 
-        # Create a new course or update an existing one
-        course_id = request.form.get("course_id")
-        if course_id:
+        print(f"Processing course with ID: {course_id}")
+        print("Course data:", {
+            "title": title,
+            "description": description,
+            "duration": duration,
+            "status": status,
+            "tags": tags
+        })
+
+        if course_id and course_id.strip():
             # Update existing course
-            course = Course.query.get(course_id)
+            course = Course.query.get(int(course_id))
             if course:
+                print(f"Updating existing course {course_id}")
                 course.title = title
                 course.description = description
                 course.duration = duration
                 course.status = status
                 course.tags = tags
         else:
-            # Add new course
-            new_course = Course(
+            # Create new course
+            print("Creating new course")
+            course = Course(
                 title=title,
                 description=description,
                 duration=duration,
                 status=status,
                 tags=tags
             )
-            db.session.add(new_course)
+            db.session.add(course)
 
-        # Commit the session
+        # Commit changes
         db.session.commit()
+        print("Course saved successfully")
         return redirect(url_for("manage_courses"))
-    
+
     except Exception as e:
-        print(f"Error saving course: {str(e)}")  # For debugging
+        print(f"Error saving course: {str(e)}")
+        import traceback
+        print(traceback.format_exc())  # Print full error traceback
         db.session.rollback()
         return redirect(url_for("manage_courses"))
 
