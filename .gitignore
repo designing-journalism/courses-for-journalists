@@ -2,3 +2,9 @@ __pycache__
 **/.DS_Store
 .DS_Store
 venv
+tool_pdf2markdown/.venv
+tool_pdf2markdown/.vscode
+tool_pdf2markdown/test-input/raadsinfo-inator-report
+tool_pdf2markdown/test-input/tai_chi_yang_24_vorm
+tool_pdf2markdown/test-input/raadsinfo-inator-report.pdf
+tool_pdf2markdown/test-input/tai_chi_yang_24_vorm.pdf
