@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Relate URL - News Relations{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                <li class="breadcrumb-item active">Relate URL</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-link"></i> Add and Relate News Article URL
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success mb-3">
+                    <i class="fas fa-info-circle"></i> This tool allows you to add <strong>new articles</strong> to your collection and relate them to all existing articles.
+                </div>
+                <p>
+                    Enter the URL of a news article to add it to your collection, generate a summary, and find related articles in the database.
+                </p>
+                <form action="{{ url_for('process_url') }}" method="post" id="urlForm">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">News Article URL</label>
+                        <input type="url" class="form-control" id="url" name="url" placeholder="https://example.com/news/article" required>
+                        <div class="form-text">Enter the full URL including https://</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="relateButton">
+                        <i class="fas fa-plus-circle"></i> Add article and relate
+                    </button>
+                </form>
+
+                <script>
+                    document.getElementById('urlForm').addEventListener('submit', function(e) {
+                        const button = document.getElementById('relateButton');
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-success');
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                        // Form submission continues normally
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> How It Works
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>Enter the URL of a news article</li>
+                    <li>The system will fetch and parse the article content</li>
+                    <li>The article will be added to your collection if it's not already present</li>
+                    <li>An AI-generated summary will be created to give you a quick overview</li>
+                    <li>Using vector embeddings, it will compare the article against all existing articles in your collection</li>
+                    <li>AI will analyze the relationships between the article and the most similar existing articles</li>
+                    <li>Results will be displayed with visualizations to help understand the connections</li>
+                </ol>
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb"></i> Tip: Make sure you've indexed your articles first by clicking the "Index All Articles" button on the home page.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
